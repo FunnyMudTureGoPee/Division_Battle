@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Script.Grid
@@ -129,25 +130,30 @@ namespace Script.Grid
         /// <param name="y">网格y坐标</param>
         /// <param name="battalion">营</param>
         /// <returns>是否可以放置</returns>
-        public bool AddBattalion(int x, int y, GameObject battalion)
+        public bool AddBattalion(int x, int y, GameObject battalion,out List<(int X, int Y)> list)
         {
             int[,] ints = battalion.GetComponent<Battalion>().BattalionData.Ints;
-            int dx = ints.GetLength(0);
-            int dy = ints.GetLength(1);
+            int dx = ints.GetLength(1);
+            int dy = ints.GetLength(0);
+            list = new List<(int X, int Y)>();
             if (x >= 0 && y >= 0 && x < width && y < height)
             {
                 switch (battalion.GetComponent<Battalion>().BattalionData.Dir.GetHashCode())
                 {
                     case 0:
                         //up
-                        if (!(x + dx < width && y + dy < height)) return false;
+                        if (!(x + dx < width && y + dy < height))
+                        {
+                            
+                            return false;
+                        }
                         for (int i = 0; i < dx; i++)
                         {
                             for (int j = 0; j < dy; j++)
                             {
-                                if (ints[i, j] == 1)
+                                if (ints[j, i] == 1)
                                 {
-                                    if (!(battalions[x + j, y + i] is null))
+                                    if (!(battalions[x + i, y + j] is null))
                                     {
                                         return false;
                                     }
@@ -159,10 +165,11 @@ namespace Script.Grid
                         {
                             for (int j = 0; j < dy; j++)
                             {
-                                if (ints[i, j] == 1)
+                                if (ints[j, i] == 1)
                                 {
-                                    battalions[x + j, y + i] = battalion;
-                                    debugTextArray[x + j, y + i].color = Color.red;
+                                    list.Add((x + i, y + j));
+                                    battalions[x + i, y + j] = battalion;
+                                    debugTextArray[x + i, y + j].color = Color.red;
                                 }
                             }
                         }
@@ -170,14 +177,14 @@ namespace Script.Grid
                         break;
                     case 1:
                         //right
-                        if (!(x + dy < width && y - dx < height)) return false;
+                        if (!(x + dy < width && y - dx >0)) return false;
                         for (int i = 0; i < dx; i++)
                         {
                             for (int j = 0; j < dy; j++)
                             {
-                                if (ints[i, j] == 1)
+                                if (ints[j, i] == 1)
                                 {
-                                    if (!(battalions[x + i, y - j] is null))
+                                    if (!(battalions[x + j, y - i] is null))
                                     {
                                         return false;
                                     }
@@ -188,10 +195,11 @@ namespace Script.Grid
                         {
                             for (int j = 0; j < dy; j++)
                             {
-                                if (ints[i, j] == 1)
+                                if (ints[j, i] == 1)
                                 {
-                                    battalions[x + i, y - j] = battalion;
-                                    debugTextArray[x + i, y - j].color = Color.yellow;
+                                    list.Add((x + j, y - i));
+                                    battalions[x + j, y - i] = battalion;
+                                    debugTextArray[x + j, y - i].color = Color.yellow;
                                 }
                             }
                         }
@@ -199,14 +207,14 @@ namespace Script.Grid
                         break;
                     case 2:
                         //down
-                        if (!(x - dx < width && y - dy < height)) return false;
+                        if (!(x - dx >0 && y - dy >0)) return false;
                         for (int i = 0; i < dx; i++)
                         {
                             for (int j = 0; j < dy; j++)
                             {
-                                if (ints[i, j] == 1)
+                                if (ints[j, i] == 1)
                                 {
-                                    if (!(battalions[x - j, y - i] is null))
+                                    if (!(battalions[x -i, y -j] is null))
                                     {
                                         return false;
                                     }
@@ -217,10 +225,11 @@ namespace Script.Grid
                         {
                             for (int j = 0; j < dy; j++)
                             {
-                                if (ints[i, j] == 1)
+                                if (ints[j, i] == 1)
                                 {
-                                    battalions[x - j, y - i] = battalion;
-                                    debugTextArray[x - j, y - i].color = Color.green;
+                                    list.Add((x -i, y -j));
+                                    battalions[x -i, y -j] = battalion;
+                                    debugTextArray[x -i, y -j].color = Color.green;
                                 }
                             }
                         }
@@ -228,14 +237,14 @@ namespace Script.Grid
                         break;
                     case 3:
                         //left
-                        if (!(x - dy < width && y + dx < height)) return false;
+                        if (!(x - dy >0 && y + dx < height)) return false;
                         for (int i = 0; i < dx; i++)
                         {
                             for (int j = 0; j < dy; j++)
                             {
-                                if (ints[i, j] == 1)
+                                if (ints[j, i] == 1)
                                 {
-                                    if (!(battalions[x - i, y + j] is null))
+                                    if (!(battalions[x - j, y + i] is null))
                                     {
                                         return false;
                                     }
@@ -246,10 +255,11 @@ namespace Script.Grid
                         {
                             for (int j = 0; j < dy; j++)
                             {
-                                if (ints[i, j] == 1)
+                                if (ints[j, i] == 1)
                                 {
-                                    battalions[x - i, y + j] = battalion;
-                                    debugTextArray[x - i, y + j].color = Color.blue;
+                                    list.Add((x - j, y + i));
+                                    battalions[x - j, y + i] = battalion;
+                                    debugTextArray[x - j, y + i].color = Color.blue;
                                 }
                             }
                         }
@@ -261,6 +271,21 @@ namespace Script.Grid
             }
 
             return false;
+        }
+
+        private void InitGrid(int x, int y)
+        {
+            battalions[x , y ] =null;
+            debugTextArray[x , y ].color = Color.white;
+        }
+
+        public void RemoveBattalion(GameObject g)
+        {
+            List<(int X, int Y)> list = g.GetComponent<Battalion>().BattalionXY;
+            foreach (var XYs in list)
+            {
+                InitGrid(XYs.X,XYs.Y);
+            }
         }
     }
 }

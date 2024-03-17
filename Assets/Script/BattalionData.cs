@@ -28,6 +28,7 @@ namespace Script
         private const double DefHigh = 20;
 
         public int[,] Ints { get; set; } = new int[3, 4];
+
         /// <summary>
         /// 放置方向
         /// </summary>
@@ -46,9 +47,10 @@ namespace Script
             get => dir;
             set => dir = value;
         }
-        
-        private int id;//名称代码 
-        private string battalionName;//名称
+
+        private int id; //名称代码 
+        private string battalionName; //名称
+
         /// <summary>
         /// Infantry,
         /// Artillery,
@@ -61,6 +63,7 @@ namespace Script
             Armor,
             Default
         }
+
         private BattalionTypes battalionType;
 
         private Sprite image;
@@ -132,16 +135,16 @@ namespace Script
             set => _buffList = value;
         }
 
-        public BattalionData(GameObject gameObject,int id, BattalionTypes battalionType, Dirs dir)
+        public BattalionData(GameObject gameObject, int id, BattalionTypes battalionType, Dirs dir)
         {
             this.dir = dir;
             this.id = id;
             this.battalionType = battalionType;
             GameObject = gameObject;
-            LoadBattalion(this.id,this.battalionType);
+            LoadBattalion(this.id, this.battalionType);
         }
 
-        public void LoadBattalion(int id,BattalionTypes battalionType)
+        public void LoadBattalion(int id, BattalionTypes battalionType)
         {
             this.id = id;
             battalionName = id.ToString() + "th." + battalionType.ToString();
@@ -155,11 +158,11 @@ namespace Script
                     ReOP = OpHigh;
                     Att = AttLow;
                     Def = DefNormal;
-                    Ints = new int[3, 4]
+                    Ints = new int[3, 2]
                     {
-                        { 1, 1, 0, 0 },
-                        { 1, 1, 0, 0 },
-                        { 1, 1, 0, 0 }
+                        { 1, 1 },
+                        { 1, 1 },
+                        { 1, 1 }
                     };
                     break;
                 case 1:

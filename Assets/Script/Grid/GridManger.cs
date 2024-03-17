@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using Grid = Script.Grid.Grid;
 
-public class NewBehaviourScript : MonoBehaviour
+public class GridManger : MonoBehaviour
 {
     [SerializeField] private GameObject pfGameObject;
     
@@ -15,6 +15,8 @@ public class NewBehaviourScript : MonoBehaviour
     [SerializeField] private float cellsize;
     [Tooltip("目标对象")]
     [SerializeField] private GameObject _gameObject;//目标对象
+
+    private Transform aimTransform;
     [Tooltip("开启后，将根据目标对象的大小，自动设置网格的长宽")][SerializeField] private bool isAutoSet;
     private Grid grid;
 
@@ -23,7 +25,7 @@ public class NewBehaviourScript : MonoBehaviour
     
     private void Start()
     {
-
+        aimTransform= _gameObject.transform.Find("BattalionList");
         if (_gameObject)
         {
             if (isAutoSet)
@@ -76,13 +78,18 @@ public class NewBehaviourScript : MonoBehaviour
                 pfGameObject, 
                 placeObjectWorldPosition, 
                 Quaternion.Euler(0,0,GetRotationAngle(_dirs)), 
-                _gameObject.transform);
+                aimTransform);
             gameObject.GetComponent<Battalion>().BattalionData = new BattalionData(gameObject,123,
                 _types, _dirs);
-            if (!grid.AddBattalion(x,y,gameObject))
+            if (!grid.AddBattalion(x,y,gameObject,out List<(int X, int Y)> list))
             {
                 Destroy(gameObject);
                 Functions.CreateTip("无法放置", Functions.GetMouseWorldPosition(), 2f);
+            }
+
+            if (list is not null)
+            {
+                gameObject.GetComponent<Battalion>().BattalionXY = list;
             }
         }
 
@@ -137,6 +144,14 @@ public class NewBehaviourScript : MonoBehaviour
                     Functions.CreateTip("Up",Functions.GetMouseWorldPosition(),1f);
                     break;
             }
+        }
+
+        if (Input.GetMouseButtonDown(2))
+        {
+            grid.GetXY(Functions.GetMouseWorldPosition(),out int x,out int y);
+            GameObject g = grid.GetBattalion(x, y);
+            if(g is not null) grid.RemoveBattalion(g);
+            Destroy(g);
         }
     }
 }
