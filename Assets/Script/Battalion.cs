@@ -9,9 +9,11 @@ public class Battalion : MonoBehaviour
 {
     public BattalionData BattalionData { get; set; }
     public List<(int X, int Y)> BattalionXY { get; set; }
+    private GridManger gm;
 
     private void Awake()
     {
+        gm = GameObject.Find("GridManger").GetComponent<GridManger>();
         if (BattalionData is null)
         {
             BattalionData =
@@ -21,21 +23,21 @@ public class Battalion : MonoBehaviour
 
     private string test()
     {
-        string str="坐标如下：\n";
+        string str = "坐标如下：\n";
         foreach (var XYs in BattalionXY)
         {
-            str = str+XYs.X + "," + XYs.Y + "\n";
+            str = str + XYs.X + "," + XYs.Y + "\n";
         }
-
         return str;
     }
+    
+    
+
     public void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            Functions.CreateTip(test(),gameObject.transform.position,5);
+            Functions.CreateTip(gm.DetectAdjacentCellProperties(gameObject), gameObject.transform.position, 5);
         }
-        
     }
-    
 }

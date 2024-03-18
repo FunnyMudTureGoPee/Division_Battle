@@ -95,7 +95,7 @@ namespace Script.Functions
         public static void CreateTip(string text, Vector3 vector3, float time)
         {
             vector3.z = -2;
-            GameObject gameObject = CreateWorldTextReturnGameObject(text,null,vector3,200, Color.red);
+            GameObject gameObject = CreateWorldTextReturnGameObject(text,null,vector3,100, Color.red);
             gameObject.AddComponent<MonoStub>();
             gameObject.GetComponent<MonoStub>().StartCoroutine(Timer(gameObject, time));
         }

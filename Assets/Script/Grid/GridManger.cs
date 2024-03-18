@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Script;
 using Script.Functions;
+using Unity.Burst.Intrinsics;
 using Unity.Mathematics;
 using UnityEngine;
 using Grid = Script.Grid.Grid;
@@ -22,6 +23,7 @@ public class GridManger : MonoBehaviour
     private bool isAutoSet;
 
     public Grid Grid { get; set; }
+
     public float Cellsize
     {
         get => cellsize;
@@ -73,6 +75,101 @@ public class GridManger : MonoBehaviour
             case BattalionData.Dirs.Down: return new Vector2Int(1, 1);
             case BattalionData.Dirs.Left: return new Vector2Int(1, 0);
         }
+    }
+
+    public string DetectAdjacentCellProperties(GameObject go)
+    {
+        BattalionData.Dirs godirs = go.GetComponent<Battalion>().BattalionData.Dir;
+        Vector3 goVector3 = go.transform.position;
+        Vector2Int rotationOffset = GetRotationOffset(godirs);
+        Vector3 placeObjectWorldPosition = goVector3 -
+                                           new Vector3(rotationOffset.x, rotationOffset.y, 0) * (cellsize*2)
+                                           +new Vector3(cellsize,cellsize,0);
+        if (godirs==BattalionData.Dirs.Down)
+        {
+            placeObjectWorldPosition += new Vector3(-cellsize, -cellsize);
+        }
+        Grid.GetXY(placeObjectWorldPosition, out int x, out int y);
+        string text = "相邻如下：\n";
+        GameObject gameObjectSelf = Grid.GetBattalion(x, y);
+        Debug.Log(x+","+y);
+        List<(int X, int Y)> BattalionXY = gameObjectSelf.GetComponent<Battalion>().BattalionXY;
+        GameObject checkGameobject;
+        foreach (var XYs in BattalionXY)
+        {
+            checkGameobject = Grid.GetBattalion(XYs.X + 1, XYs.Y);
+            List<GameObject> gameObjects = new List<GameObject>();
+            if (checkGameobject != gameObjectSelf && checkGameobject is not null)
+            {
+                if (gameObjects.Count == 0)
+                {
+                    gameObjects.Add(checkGameobject);
+                    text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName +XYs.X +","+ XYs.Y +"\n";
+                }
+                for (int i = 0;i<gameObjects.Count;i++)
+                {
+                    if (checkGameobject == gameObjects[i]) continue;
+                    gameObjects.Add(checkGameobject);
+                    text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +","+ XYs.Y +"\n";
+                }
+            }
+
+            checkGameobject = Grid.GetBattalion(XYs.X - 1, XYs.Y);
+            if (checkGameobject != gameObjectSelf && checkGameobject is not null)
+            {
+                if (gameObjects.Count == 0)
+                {
+                    gameObjects.Add(checkGameobject);
+                    text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +","+ XYs.Y +"\n";
+                }
+                for (int i = 0;i<gameObjects.Count;i++)
+                {
+                    if (checkGameobject != gameObjects[i])
+                    {
+                        gameObjects.Add(checkGameobject);
+                        text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X+","+ XYs.Y +"\n";
+                    }
+                }
+            }
+
+            checkGameobject = Grid.GetBattalion(XYs.X, XYs.Y - 1);
+            if (checkGameobject != gameObjectSelf && checkGameobject is not null)
+            {
+                if (gameObjects.Count == 0)
+                {
+                    gameObjects.Add(checkGameobject);
+                    text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName +XYs.X +","+ XYs.Y +"\n";
+                }
+                for (int i = 0;i<gameObjects.Count;i++)
+                {
+                    if (checkGameobject != gameObjects[i])
+                    {
+                        gameObjects.Add(checkGameobject);
+                        text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +","+ XYs.Y +"\n";
+                    }
+                }
+            }
+
+            checkGameobject = Grid.GetBattalion(XYs.X, XYs.Y + 1);
+            if (checkGameobject != gameObjectSelf && checkGameobject is not null)
+            {
+                if (gameObjects.Count == 0)
+                {
+                    gameObjects.Add(checkGameobject);
+                    text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +","+ XYs.Y +"\n";
+                }
+                for (int i = 0;i<gameObjects.Count;i++)
+                {
+                    if (checkGameobject != gameObjects[i])
+                    {
+                        gameObjects.Add(checkGameobject);
+                        text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +","+ XYs.Y +"\n";
+                    }
+                }
+            }
+        }
+
+        return text;
     }
 
     private void Update()
