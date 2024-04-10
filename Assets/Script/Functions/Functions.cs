@@ -1,4 +1,8 @@
 ﻿using System.Collections;
+using System.IO;
+using System.Xml;
+using LitJson;
+using Script.Grid;
 using UnityEngine;
 
 namespace Script.Functions
@@ -89,8 +93,34 @@ namespace Script.Functions
             return gameObject;
         }
         
-        
+        //用Json方法对数据进行保存和读取
+        public static void SaveByJson(string filename,GridData gridData)
+        {
+            
+            string datapath = Application.dataPath + "/SaveFiles" + "/"+filename+ ".json";
+            string dateStr = JsonMapper.ToJson(gridData);  //利用JsonMapper将date转换成字符串
+            StreamWriter sw = new StreamWriter(datapath); //创建一个写入流
+            sw.Write(dateStr);//将dateStr写入
+            sw.Close();//关闭流
 
+        }
+        public static GridData LoadByJson(string filename)
+        {
+            string datePath = Application.dataPath + "/SaveFiles" + "/"+filename+ ".json";
+            if (File.Exists(datePath ))  //判断这个路径里面是否为空
+            {
+                StreamReader sr = new StreamReader(datePath);//创建读取流;
+                string jsonStr = sr.ReadToEnd();//使用方法ReadToEnd（）遍历的到保存的内容
+                sr.Close();
+                GridData date = JsonMapper.ToObject<GridData>(jsonStr);//使用JsonMapper将遍历得到的jsonStr转换成Date对象
+                return date;
+            }
+            else
+            {
+                Debug.Log("------未找到文件------");
+                return null;
+            }
+        }
 
         public static void CreateTip(string text, Vector3 vector3, float time)
         {

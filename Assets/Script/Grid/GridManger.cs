@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Script;
@@ -6,6 +7,7 @@ using Unity.Burst.Intrinsics;
 using Unity.Mathematics;
 using UnityEngine;
 using Grid = Script.Grid.Grid;
+using Types = Script.BattalionData.BattalionTypes;
 
 public class GridManger : MonoBehaviour
 {
@@ -14,6 +16,7 @@ public class GridManger : MonoBehaviour
     [SerializeField] private int width;
     [SerializeField] private int heigth;
     [SerializeField] private float cellsize;
+    [SerializeField] private bool isEditor;
 
     [Tooltip("目标对象")] [SerializeField] private GameObject _gameObject; //目标对象
 
@@ -33,25 +36,6 @@ public class GridManger : MonoBehaviour
     public BattalionData.BattalionTypes Types { get; set; } = BattalionData.BattalionTypes.Infantry;
 
     public BattalionData.Dirs Dirs { get; set; } = BattalionData.Dirs.Up;
-
-    private void Awake()
-    {
-        aimTransform = _gameObject.transform.Find("BattalionList");
-        if (_gameObject)
-        {
-            if (isAutoSet)
-            {
-                width = (int)(_gameObject.GetComponent<RectTransform>().rect.width / cellsize);
-                heigth = (int)(_gameObject.GetComponent<RectTransform>().rect.height / cellsize);
-            }
-
-            Grid = new Script.Grid.Grid(width, heigth, cellsize, _gameObject, new(-540, -360));
-        }
-        else
-        {
-            Grid = new Script.Grid.Grid(width, heigth, cellsize, _gameObject, new(0, 0));
-        }
-    }
 
     public float GetRotationAngle(BattalionData.Dirs dirs)
     {
@@ -77,40 +61,67 @@ public class GridManger : MonoBehaviour
         }
     }
 
-    public string DetectAdjacentCellProperties(GameObject go)
+    /// <summary>
+    /// 相邻检测
+    /// </summary>
+    /// <param name="go">被检测的 battalion</param>
+    /// <returns></returns>
+    public List<GameObject> DetectAdjacentCellProperties(GameObject go)
     {
         BattalionData.Dirs godirs = go.GetComponent<Battalion>().BattalionData.Dir;
         Vector3 goVector3 = go.transform.position;
         Vector2Int rotationOffset = GetRotationOffset(godirs);
         Vector3 placeObjectWorldPosition = goVector3 -
-                                           new Vector3(rotationOffset.x, rotationOffset.y, 0) * (cellsize*2)
-                                           +new Vector3(cellsize,cellsize,0);
-        if (godirs==BattalionData.Dirs.Down)
+                                           new Vector3(rotationOffset.x, rotationOffset.y, 0) * (cellsize * 2)
+                                           + new Vector3(cellsize, cellsize, 0);
+        if (godirs == BattalionData.Dirs.Down)
         {
             placeObjectWorldPosition += new Vector3(-cellsize, -cellsize);
         }
+
         Grid.GetXY(placeObjectWorldPosition, out int x, out int y);
-        string text = "相邻如下：\n";
+        //debug文本内容
+        string Debugtext = "相邻如下：\n";
+        //相邻的对象
+        List<GameObject> gameObjectList = new List<GameObject>();
+        //
         GameObject gameObjectSelf = Grid.GetBattalion(x, y);
-        Debug.Log(x+","+y);
-        List<(int X, int Y)> BattalionXY = gameObjectSelf.GetComponent<Battalion>().BattalionXY;
+        List<(int X, int Y)> BattalionXY;
+        if (gameObjectSelf is not null)
+        {
+            BattalionXY = gameObjectSelf.GetComponent<Battalion>().BattalionXY;
+        }
+        else
+        {
+            BattalionXY = new List<(int X, int Y)>();
+            Debug.Log(x+","+y+"gameObjectSelf is null");
+        }
         GameObject checkGameobject;
         foreach (var XYs in BattalionXY)
         {
-            checkGameobject = Grid.GetBattalion(XYs.X + 1, XYs.Y);
             List<GameObject> gameObjects = new List<GameObject>();
+            checkGameobject = Grid.GetBattalion(XYs.X + 1, XYs.Y);
+
             if (checkGameobject != gameObjectSelf && checkGameobject is not null)
             {
                 if (gameObjects.Count == 0)
                 {
                     gameObjects.Add(checkGameobject);
-                    text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName +XYs.X +","+ XYs.Y +"\n";
+                    gameObjectList.Add(checkGameobject);
+                    
+                    //debug文本内容
+                    Debugtext += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X + "," +
+                                 XYs.Y + "\n";
                 }
-                for (int i = 0;i<gameObjects.Count;i++)
+
+                for (int i = 0; i < gameObjects.Count; i++)
                 {
                     if (checkGameobject == gameObjects[i]) continue;
                     gameObjects.Add(checkGameobject);
-                    text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +","+ XYs.Y +"\n";
+                    gameObjectList.Add(checkGameobject);
+                    //debug文本内容
+                    Debugtext += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X + "," +
+                                 XYs.Y + "\n";
                 }
             }
 
@@ -120,14 +131,22 @@ public class GridManger : MonoBehaviour
                 if (gameObjects.Count == 0)
                 {
                     gameObjects.Add(checkGameobject);
-                    text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +","+ XYs.Y +"\n";
+                    gameObjectList.Add(checkGameobject);
+                    //debug文本内容
+                    Debugtext += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X + "," +
+                                 XYs.Y + "\n";
                 }
-                for (int i = 0;i<gameObjects.Count;i++)
+
+                for (int i = 0; i < gameObjects.Count; i++)
                 {
                     if (checkGameobject != gameObjects[i])
                     {
                         gameObjects.Add(checkGameobject);
-                        text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X+","+ XYs.Y +"\n";
+                        gameObjectList.Add(checkGameobject);
+                        //debug文本内容
+                        Debugtext += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +
+                                     "," +
+                                     XYs.Y + "\n";
                     }
                 }
             }
@@ -138,14 +157,22 @@ public class GridManger : MonoBehaviour
                 if (gameObjects.Count == 0)
                 {
                     gameObjects.Add(checkGameobject);
-                    text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName +XYs.X +","+ XYs.Y +"\n";
+                    gameObjectList.Add(checkGameobject);
+                    //debug文本内容
+                    Debugtext += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X + "," +
+                                 XYs.Y + "\n";
                 }
-                for (int i = 0;i<gameObjects.Count;i++)
+
+                for (int i = 0; i < gameObjects.Count; i++)
                 {
                     if (checkGameobject != gameObjects[i])
                     {
                         gameObjects.Add(checkGameobject);
-                        text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +","+ XYs.Y +"\n";
+                        gameObjectList.Add(checkGameobject);
+                        //debug文本内容
+                        Debugtext += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +
+                                     "," +
+                                     XYs.Y + "\n";
                     }
                 }
             }
@@ -156,52 +183,91 @@ public class GridManger : MonoBehaviour
                 if (gameObjects.Count == 0)
                 {
                     gameObjects.Add(checkGameobject);
-                    text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +","+ XYs.Y +"\n";
+                    gameObjectList.Add(checkGameobject);
+                    //debug文本内容
+                    Debugtext += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X + "," +
+                                 XYs.Y + "\n";
                 }
-                for (int i = 0;i<gameObjects.Count;i++)
+
+                for (int i = 0; i < gameObjects.Count; i++)
                 {
                     if (checkGameobject != gameObjects[i])
                     {
                         gameObjects.Add(checkGameobject);
-                        text += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +","+ XYs.Y +"\n";
+                        gameObjectList.Add(checkGameobject);
+                        //debug文本内容
+                        Debugtext += checkGameobject.GetComponent<Battalion>().BattalionData.BattalionName + XYs.X +
+                                     "," +
+                                     XYs.Y + "\n";
                     }
                 }
             }
         }
 
-        return text;
+        return gameObjectList;
+    }
+
+    private void Awake()
+    {
+        aimTransform = _gameObject.transform.Find("BattalionList");
+        if (_gameObject)
+        {
+            if (isAutoSet)
+            {
+                width = (int)(_gameObject.GetComponent<RectTransform>().rect.width / cellsize);
+                heigth = (int)(_gameObject.GetComponent<RectTransform>().rect.height / cellsize);
+            }
+
+            Grid = new Script.Grid.Grid(width, heigth, cellsize, _gameObject,
+                new Vector3(-_gameObject.GetComponent<RectTransform>().rect.width / 2,
+                    -_gameObject.GetComponent<RectTransform>().rect.height / 2, 0));
+        }
+        else
+        {
+            Grid = new Script.Grid.Grid(width, heigth, cellsize, _gameObject,
+                new Vector3(-_gameObject.GetComponent<RectTransform>().rect.width / 2,
+                    -_gameObject.GetComponent<RectTransform>().rect.height / 2, 0));
+        }
     }
 
     private void Update()
     {
+        if (isEditor)
+        {
+            Editor();
+        }
+        
+    }
+
+    public void SwitchEditingStatus()
+    {
+        isEditor = !isEditor;
+    }
+    
+    /// <summary>
+    /// 编辑部队编成
+    /// </summary>
+    private void Editor()
+    {
         if (Input.GetMouseButtonDown(0))
         {
+            if (Grid.IsOnGrid(Functions.GetMouseWorldPosition()) is false)
+            {
+                return;
+            }
+
             Grid.GetXY(Functions.GetMouseWorldPosition(), out int x, out int y);
 
-            Vector2Int rotationOffset = GetRotationOffset(Dirs);
-            Vector3 placeObjectWorldPosition = Grid.GetWorldPosition(x, y) +
-                                               new Vector3(rotationOffset.x, rotationOffset.y, 0) * cellsize;
-            GameObject gameObject = Instantiate(
-                pfGameObject,
-                placeObjectWorldPosition,
-                Quaternion.Euler(0, 0, GetRotationAngle(Dirs)),
-                aimTransform);
-            gameObject.GetComponent<Battalion>().BattalionData = new BattalionData(gameObject, 123,
-                Types, Dirs);
-            if (!Grid.AddBattalion(x, y, gameObject, out List<(int X, int Y)> list))
-            {
-                Destroy(gameObject);
-                Functions.CreateTip("无法放置", Functions.GetMouseWorldPosition(), 2f);
-            }
-
-            if (list is not null)
-            {
-                gameObject.GetComponent<Battalion>().BattalionXY = list;
-            }
+            CreatBattalion(x, y,Dirs,Types);
         }
 
         if (Input.GetMouseButtonDown(1))
         {
+            if (Grid.IsOnGrid(Functions.GetMouseWorldPosition()) is false)
+            {
+                return;
+            }
+
             switch (Types.GetHashCode())
             {
                 case 0:
@@ -266,10 +332,76 @@ public class GridManger : MonoBehaviour
 
         if (Input.GetMouseButtonDown(2))
         {
+            if (Grid.IsOnGrid(Functions.GetMouseWorldPosition()) is false)
+            {
+                return;
+            }
+
             Grid.GetXY(Functions.GetMouseWorldPosition(), out int x, out int y);
             GameObject g = Grid.GetBattalion(x, y);
             if (g is not null) Grid.RemoveBattalion(g);
             Destroy(g);
+        }
+    }
+    /// <summary>
+    /// 创建一个营
+    /// </summary>
+    /// <param name="x">x坐标</param>
+    /// <param name="y">y坐标</param>
+    /// <param name="dirs">方向</param>
+    /// <param name="types">类型</param>
+    public void CreatBattalion(int x, int y,BattalionData.Dirs dirs,Types types)
+    {
+        Vector2Int rotationOffset = GetRotationOffset(dirs);
+        Vector3 placeObjectWorldPosition = Grid.GetWorldPosition(x, y) +
+                                           new Vector3(rotationOffset.x, rotationOffset.y, 0) * cellsize;
+        GameObject gameObject = Instantiate(
+            pfGameObject,
+            placeObjectWorldPosition,
+            Quaternion.Euler(0, 0, GetRotationAngle(dirs)),
+            aimTransform);
+        gameObject.GetComponent<Battalion>().BattalionData = new BattalionData(gameObject, 123,
+            types, dirs);
+        if (!Grid.AddBattalion(x, y, gameObject, out List<(int X, int Y)> list))
+        {
+            Destroy(gameObject);
+            Functions.CreateTip("无法放置", Functions.GetMouseWorldPosition(), 2f);
+        }
+
+        if (list is not null)
+        {
+            gameObject.GetComponent<Battalion>().BattalionXY = list;
+        }
+    }
+
+    public void Type2Infantry()
+    {
+        SwitchType(Types.Infantry);
+    }
+
+    public void Type2Artillery()
+    {
+        SwitchType(Types.Artillery);
+    }
+
+    public void Type2Armor()
+    {
+        SwitchType(Types.Armor);
+    }
+
+    public void SwitchType(Types types)
+    {
+        switch (types.GetHashCode())
+        {
+            case 0:
+                Types = BattalionData.BattalionTypes.Infantry;
+                break;
+            case 1:
+                Types = BattalionData.BattalionTypes.Artillery;
+                break;
+            case 2:
+                Types = BattalionData.BattalionTypes.Armor;
+                break;
         }
     }
 }

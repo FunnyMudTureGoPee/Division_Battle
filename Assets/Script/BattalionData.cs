@@ -76,7 +76,15 @@ namespace Script
         [Tooltip("组织度恢复度")] [SerializeField] private double ReOP;
 
         [Tooltip("攻击力")] [SerializeField] private double ATT;
+
         [Tooltip("防御力")] [SerializeField] private double DEF;
+
+        //buff修正后属性
+        private double _HP;
+        private double _OP;
+        private double _ReOP;
+        private double _ATT;
+        private double _DEF;
         private List<Buff> _buffList = new List<Buff>();
 
         public GameObject GameObject { get; set; }
@@ -129,6 +137,42 @@ namespace Script
             set => DEF = value;
         }
 
+        public double _Hp
+        {
+            get => _HP;
+            set => _HP = value;
+        }
+
+        public double _Op
+        {
+            get => _OP;
+            set => _OP = value;
+        }
+
+        public double _ReOp
+        {
+            get => _ReOP;
+            set => _ReOP = value;
+        }
+
+        public double _Att
+        {
+            get => _ATT;
+            set => _ATT = value;
+        }
+
+        public double _Def
+        {
+            get => _DEF;
+            set => _DEF = value;
+        }
+
+        public int ID
+        {
+            get => id;
+            set => id = value;
+        }
+
         public List<Buff> BuffList
         {
             get => _buffList;
@@ -144,6 +188,7 @@ namespace Script
             LoadBattalion(this.id, this.battalionType);
         }
 
+
         public void LoadBattalion(int id, BattalionTypes battalionType)
         {
             this.id = id;
@@ -155,9 +200,10 @@ namespace Script
                     image = Resources.Load<Sprite>("BattalionsImage/步兵营");
                     Hp = HpHigh;
                     Op = OpHigh;
-                    ReOP = OpHigh;
+                    ReOP = ReOpHigh;
                     Att = AttLow;
                     Def = DefNormal;
+
                     Ints = new int[3, 2]
                     {
                         { 1, 1 },
@@ -198,7 +244,18 @@ namespace Script
                     break;
             }
 
+            InitializeData();
             GameObject.GetComponent<Image>().sprite = image;
         }
+
+        public void InitializeData()
+        {
+            _Hp = 1;
+            _OP = 1;
+            _ReOP = 1;
+            _Att = 1;
+            _Def = 1;
+        }
     }
+    
 }
