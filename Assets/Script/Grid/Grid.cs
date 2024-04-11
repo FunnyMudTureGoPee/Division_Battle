@@ -162,13 +162,13 @@ namespace Script.Grid
         /// <returns>是否可以放置</returns>
         public bool AddBattalion(int x, int y, GameObject battalion, out List<(int X, int Y)> list)
         {
-            int[,] ints = battalion.GetComponent<Battalion>().BattalionData.Ints;
+            int[,] ints = battalion.GetComponent<Battalion.Battalion>().BattalionData.Ints;
             int dx = ints.GetLength(1);
             int dy = ints.GetLength(0);
             list = new List<(int X, int Y)>();
             if (x >= 0 && y >= 0 && x < width && y < height)
             {
-                switch (battalion.GetComponent<Battalion>().BattalionData.Dir.GetHashCode())
+                switch (battalion.GetComponent<Battalion.Battalion>().BattalionData.Dir.GetHashCode())
                 {
                     case 0:
                         //up
@@ -314,7 +314,7 @@ namespace Script.Grid
 
         public void RemoveBattalion(GameObject g)
         {
-            List<(int X, int Y)> list = g.GetComponent<Battalion>().BattalionXY;
+            List<(int X, int Y)> list = g.GetComponent<Battalion.Battalion>().BattalionXY;
             foreach (var XYs in list)
             {
                 InitGrid(XYs.X, XYs.Y);

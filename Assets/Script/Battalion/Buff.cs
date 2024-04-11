@@ -1,7 +1,6 @@
 ﻿using System;
-using UnityEngine;
 
-namespace Script
+namespace Script.Battalion
 {
     public class Buff
     {
@@ -86,9 +85,7 @@ namespace Script
         /// </summary>
         public void Buff_Infantry_Infantry(BattalionData battalionData)
         {
-            battalionData._Hp += 0.02;
-            battalionData._Op += 0.02;
-            battalionData._ReOp += 0.01;
+            battalionData._ReOp += 0.05;
         }
 
         /// <summary>
@@ -150,7 +147,6 @@ namespace Script
         public void Buff_Armor_Infantry(BattalionData battalionData)
         {
             battalionData._Def += 0.05;
-            battalionData._Op += 0.1;
             battalionData._ReOp += 0.1;
         }
         
@@ -173,8 +169,17 @@ namespace Script
         public void Buff_Armor_Armor(BattalionData battalionData)
         {
             battalionData._Att += 0.1;
-            battalionData._Op += 0.01;
-            battalionData._ReOp += 0.05;
+            battalionData._ReOp += 0.1;
+        }
+        
+        ////////////////////////////////////////////////////////////////
+        /// 特殊buff
+        ////////////////////////////////////////////////////////////////
+
+        public void Buff_LowOp(BattalionData battalionData)
+        {
+            battalionData._Att *= 0.1;
+            battalionData._Def *= 0.1;
         }
     }
 }

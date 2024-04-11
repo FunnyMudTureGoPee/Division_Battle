@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Script.Battalion;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -59,14 +60,14 @@ namespace Script.Grid
                 {
                     
                     checkObjects.Add(battalionData);
-                    offset_x = GetOffset(battalionData.GetComponent<Battalion>().BattalionData.Dir,
-                        battalionData.GetComponent<Battalion>().BattalionData.BattalionType).x;
-                    offset_y = GetOffset(battalionData.GetComponent<Battalion>().BattalionData.Dir,
-                        battalionData.GetComponent<Battalion>().BattalionData.BattalionType).y;
+                    offset_x = GetOffset(battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
+                        battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType).x;
+                    offset_y = GetOffset(battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
+                        battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType).y;
                     battalionDatas.Add(new battalionData(i0+offset_x, i1+offset_y,
-                        battalionData.GetComponent<Battalion>().BattalionData.Dir,
-                        battalionData.GetComponent<Battalion>().BattalionData.BattalionType,
-                        battalionData.GetComponent<Battalion>().BattalionData.ID));
+                        battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
+                        battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType,
+                        battalionData.GetComponent<Battalion.Battalion>().BattalionData.ID));
                 }
 
                 bool b = true;
@@ -80,14 +81,14 @@ namespace Script.Grid
 
                 if (!b) continue;
                 checkObjects.Add(battalionData);
-                offset_x = GetOffset(battalionData.GetComponent<Battalion>().BattalionData.Dir,
-                    battalionData.GetComponent<Battalion>().BattalionData.BattalionType).x;
-                offset_y = GetOffset(battalionData.GetComponent<Battalion>().BattalionData.Dir,
-                    battalionData.GetComponent<Battalion>().BattalionData.BattalionType).y;
+                offset_x = GetOffset(battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
+                    battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType).x;
+                offset_y = GetOffset(battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
+                    battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType).y;
                 battalionDatas.Add(new battalionData(i0+offset_x, i1+offset_y,
-                    battalionData.GetComponent<Battalion>().BattalionData.Dir,
-                    battalionData.GetComponent<Battalion>().BattalionData.BattalionType,
-                    battalionData.GetComponent<Battalion>().BattalionData.ID));
+                    battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
+                    battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType,
+                    battalionData.GetComponent<Battalion.Battalion>().BattalionData.ID));
             }
         }
 

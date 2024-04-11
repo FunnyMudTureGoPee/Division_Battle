@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Script
+namespace Script.Battalion
 {
     public class BattalionData
     {
@@ -15,9 +14,9 @@ namespace Script
         private const double OpNormal = 15;
         private const double OpHigh = 20;
 
-        private const double ReOpLow = .10;
-        private const double ReOpNormal = .15;
-        private const double ReOpHigh = .20;
+        private const double ReOpLow = 2;
+        private const double ReOpNormal = 4;
+        private const double ReOpHigh = 6;
 
         private const double AttLow = 10;
         private const double AttNormal = 15;
@@ -72,12 +71,14 @@ namespace Script
         private double HP;
 
         [Tooltip("组织度")] [SerializeField] private double OP;
+        private double MaxOP;
 
         [Tooltip("组织度恢复度")] [SerializeField] private double ReOP;
 
         [Tooltip("攻击力")] [SerializeField] private double ATT;
 
         [Tooltip("防御力")] [SerializeField] private double DEF;
+        
 
         //buff修正后属性
         private double _HP;
@@ -147,6 +148,12 @@ namespace Script
         {
             get => _OP;
             set => _OP = value;
+        }
+
+        public double MaxOp
+        {
+            get => MaxOP;
+            set => MaxOP = value;
         }
 
         public double _ReOp
@@ -244,6 +251,7 @@ namespace Script
                     break;
             }
 
+            MaxOP = Op;
             InitializeData();
             GameObject.GetComponent<Image>().sprite = image;
         }
