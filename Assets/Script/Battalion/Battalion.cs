@@ -36,8 +36,9 @@ namespace Script.Battalion
         {
             if (BattalionData.Hp <= 0)
             {
-                gameObject.transform.parent.parent.Find("GridManger").GetComponent<GridManger>()
+                gameObject.transform.parent.parent.Find("DivisionManger").GetComponent<DivisionManger>()
                     .Grid.RemoveBattalion(gameObject);
+                GameObject.Find("BattleManager").GetComponent<BattleManager>().LostBattalionDatas.Add(BattalionData);
                 Destroy(gameObject);
             }
 
@@ -84,8 +85,8 @@ namespace Script.Battalion
         public void LoadBuff()
         {
             string debugtext = "buff来源：\n";
-            List<GameObject> gameObjects = gameObject.transform.parent.parent.Find("GridManger")
-                .GetComponent<GridManger>().DetectAdjacentCellProperties(gameObject);
+            List<GameObject> gameObjects = gameObject.transform.parent.parent.Find("DivisionManger")
+                .GetComponent<DivisionManger>().DetectAdjacentCellProperties(gameObject);
             BattalionData.BuffList.Clear();
             if (BattalionData.Op<=5&&isLowOp is false)
             {

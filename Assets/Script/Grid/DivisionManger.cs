@@ -5,14 +5,19 @@ using Types = Script.Battalion.BattalionData.BattalionTypes;
 
 namespace Script.Grid
 {
-    public class GridManger : MonoBehaviour
+    public class DivisionManger : MonoBehaviour
     {
         [SerializeField] private GameObject pfGameObject;
 
         [SerializeField] private int width;
         [SerializeField] private int heigth;
         [SerializeField] private float cellsize;
-        [SerializeField] private bool isEditor;
+        [SerializeField] private bool isEditor; //是否可编辑
+        [SerializeField] private int infantryEquipment;
+        [SerializeField] private int artilleryEquipment;
+        [SerializeField] private int armorEquipment;
+        [SerializeField] private int manpower;
+        [SerializeField] private int IC;
 
         [Tooltip("目标对象")] [SerializeField] private GameObject _gameObject; //目标对象
 
@@ -22,6 +27,36 @@ namespace Script.Grid
         private bool isAutoSet;
 
         public Grid Grid { get; set; }
+
+        public int InfantryEquipment
+        {
+            get => infantryEquipment;
+            set => infantryEquipment = value;
+        }
+
+        public int ArtilleryEquipment
+        {
+            get => artilleryEquipment;
+            set => artilleryEquipment = value;
+        }
+
+        public int ArmorEquipment
+        {
+            get => armorEquipment;
+            set => armorEquipment = value;
+        }
+
+        public int Manpower
+        {
+            get => manpower;
+            set => manpower = value;
+        }
+
+        public int Ic
+        {
+            get => IC;
+            set => IC = value;
+        }
 
         public float Cellsize
         {
@@ -90,8 +125,9 @@ namespace Script.Grid
             else
             {
                 BattalionXY = new List<(int X, int Y)>();
-                Debug.Log(x+","+y+"gameObjectSelf is null");
+                Debug.Log(x + "," + y + "gameObjectSelf is null");
             }
+
             GameObject checkGameobject;
             foreach (var XYs in BattalionXY)
             {
@@ -104,9 +140,10 @@ namespace Script.Grid
                     {
                         gameObjects.Add(checkGameobject);
                         gameObjectList.Add(checkGameobject);
-                    
+
                         //debug文本内容
-                        Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName + XYs.X + "," +
+                        Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName +
+                                     XYs.X + "," +
                                      XYs.Y + "\n";
                     }
 
@@ -116,7 +153,8 @@ namespace Script.Grid
                         gameObjects.Add(checkGameobject);
                         gameObjectList.Add(checkGameobject);
                         //debug文本内容
-                        Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName + XYs.X + "," +
+                        Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName +
+                                     XYs.X + "," +
                                      XYs.Y + "\n";
                     }
                 }
@@ -129,7 +167,8 @@ namespace Script.Grid
                         gameObjects.Add(checkGameobject);
                         gameObjectList.Add(checkGameobject);
                         //debug文本内容
-                        Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName + XYs.X + "," +
+                        Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName +
+                                     XYs.X + "," +
                                      XYs.Y + "\n";
                     }
 
@@ -140,9 +179,11 @@ namespace Script.Grid
                             gameObjects.Add(checkGameobject);
                             gameObjectList.Add(checkGameobject);
                             //debug文本内容
-                            Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName + XYs.X +
-                                         "," +
-                                         XYs.Y + "\n";
+                            Debugtext +=
+                                checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName +
+                                XYs.X +
+                                "," +
+                                XYs.Y + "\n";
                         }
                     }
                 }
@@ -155,7 +196,8 @@ namespace Script.Grid
                         gameObjects.Add(checkGameobject);
                         gameObjectList.Add(checkGameobject);
                         //debug文本内容
-                        Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName + XYs.X + "," +
+                        Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName +
+                                     XYs.X + "," +
                                      XYs.Y + "\n";
                     }
 
@@ -166,9 +208,11 @@ namespace Script.Grid
                             gameObjects.Add(checkGameobject);
                             gameObjectList.Add(checkGameobject);
                             //debug文本内容
-                            Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName + XYs.X +
-                                         "," +
-                                         XYs.Y + "\n";
+                            Debugtext +=
+                                checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName +
+                                XYs.X +
+                                "," +
+                                XYs.Y + "\n";
                         }
                     }
                 }
@@ -181,7 +225,8 @@ namespace Script.Grid
                         gameObjects.Add(checkGameobject);
                         gameObjectList.Add(checkGameobject);
                         //debug文本内容
-                        Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName + XYs.X + "," +
+                        Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName +
+                                     XYs.X + "," +
                                      XYs.Y + "\n";
                     }
 
@@ -192,9 +237,11 @@ namespace Script.Grid
                             gameObjects.Add(checkGameobject);
                             gameObjectList.Add(checkGameobject);
                             //debug文本内容
-                            Debugtext += checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName + XYs.X +
-                                         "," +
-                                         XYs.Y + "\n";
+                            Debugtext +=
+                                checkGameobject.GetComponent<Battalion.Battalion>().BattalionData.BattalionName +
+                                XYs.X +
+                                "," +
+                                XYs.Y + "\n";
                         }
                     }
                 }
@@ -232,14 +279,13 @@ namespace Script.Grid
             {
                 Editor();
             }
-        
         }
 
         public void SwitchEditingStatus()
         {
             isEditor = !isEditor;
         }
-    
+
         /// <summary>
         /// 编辑部队编成
         /// </summary>
@@ -251,9 +297,10 @@ namespace Script.Grid
                 {
                     return;
                 }
+
                 Grid.GetXY(Functions.Functions.GetMouseWorldPosition(), out int x, out int y);
 
-                CreatBattalion(x, y,Dirs,Types);
+                CreatBattalion(x, y, Dirs, Types);
             }
 
             if (Input.GetMouseButtonDown(1))
@@ -335,7 +382,7 @@ namespace Script.Grid
                 RemoveBattalion(Functions.Functions.GetMouseWorldPosition());
             }
         }
-    
+
         /// <summary>
         /// 删除一个营
         /// </summary>
@@ -344,7 +391,15 @@ namespace Script.Grid
         {
             Grid.GetXY(MouseWorldPosition, out int x, out int y);
             GameObject g = Grid.GetBattalion(x, y);
-            if (g is not null) Grid.RemoveBattalion(g);
+            if (g is not null)
+            {
+                Battalion.Battalion battalion = g.GetComponent<Battalion.Battalion>();
+                infantryEquipment += battalion.BattalionData.InfantryEquipment;
+                artilleryEquipment += battalion.BattalionData.ArtilleryEquipment;
+                armorEquipment += battalion.BattalionData.ArmorEquipment;
+                manpower += battalion.BattalionData.Manpower;
+                Grid.RemoveBattalion(g);
+            }
             Destroy(g);
         }
 
@@ -355,7 +410,7 @@ namespace Script.Grid
         /// <param name="y">y坐标</param>
         /// <param name="dirs">方向</param>
         /// <param name="types">类型</param>
-        public void CreatBattalion(int x, int y,BattalionData.Dirs dirs,Types types)
+        public void CreatBattalion(int x, int y, BattalionData.Dirs dirs, Types types)
         {
             Vector2Int rotationOffset = GetRotationOffset(dirs);
             Vector3 placeObjectWorldPosition = Grid.GetWorldPosition(x, y) +
@@ -367,11 +422,44 @@ namespace Script.Grid
                 aimTransform);
             gameObject.GetComponent<Battalion.Battalion>().BattalionData = new BattalionData(gameObject, 123,
                 types, dirs);
+
+
+            // 获取一次组件引用并存储在局部变量中
+            Battalion.Battalion battalion = gameObject.GetComponent<Battalion.Battalion>();
+
+            // 提取条件到变量中
+            bool hasEnoughInfantry = infantryEquipment - battalion.BattalionData.InfantryEquipment >= 0;
+            bool hasEnoughArtillery = artilleryEquipment - battalion.BattalionData.ArtilleryEquipment >= 0;
+            bool hasEnoughArmor = armorEquipment - battalion.BattalionData.ArmorEquipment >= 0;
+            bool hasEnoughManpower = manpower - battalion.BattalionData.Manpower >= 0;
+
+            // 使用变量简化if判断
+            if (hasEnoughInfantry && hasEnoughArtillery && hasEnoughArmor && hasEnoughManpower)
+            {
+                infantryEquipment -= battalion.BattalionData.InfantryEquipment;
+                artilleryEquipment -= battalion.BattalionData.ArtilleryEquipment;
+                armorEquipment -= battalion.BattalionData.ArmorEquipment;
+                manpower -= battalion.BattalionData.Manpower;
+            }
+            else
+            {
+                Destroy(gameObject);
+                Functions.Functions.CreateTip("缺少资源", Functions.Functions.GetMouseWorldPosition(), 2f);
+                return;
+            }
+
+            // 检查是否可以在网格上添加营
             if (!Grid.AddBattalion(x, y, gameObject, out List<(int X, int Y)> list))
             {
+                // 如果不可以，则撤销之前的资源扣除
+                infantryEquipment += battalion.BattalionData.InfantryEquipment;
+                artilleryEquipment += battalion.BattalionData.ArtilleryEquipment;
+                armorEquipment += battalion.BattalionData.ArmorEquipment;
+                manpower += battalion.BattalionData.Manpower;
                 Destroy(gameObject);
                 Functions.Functions.CreateTip("无法放置", Functions.Functions.GetMouseWorldPosition(), 2f);
             }
+
 
             if (list is not null)
             {

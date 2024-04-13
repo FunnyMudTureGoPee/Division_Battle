@@ -78,7 +78,7 @@ namespace Script.Battalion
         [Tooltip("攻击力")] [SerializeField] private double ATT;
 
         [Tooltip("防御力")] [SerializeField] private double DEF;
-        
+
 
         //buff修正后属性
         private double _HP;
@@ -87,6 +87,11 @@ namespace Script.Battalion
         private double _ATT;
         private double _DEF;
         private List<Buff> _buffList = new List<Buff>();
+
+        private int infantryEquipment;
+        private int artilleryEquipment;
+        private int armorEquipment;
+        private int manpower;
 
         public GameObject GameObject { get; set; }
 
@@ -186,6 +191,30 @@ namespace Script.Battalion
             set => _buffList = value;
         }
 
+        public int InfantryEquipment
+        {
+            get => infantryEquipment;
+            set => infantryEquipment = value;
+        }
+
+        public int ArtilleryEquipment
+        {
+            get => artilleryEquipment;
+            set => artilleryEquipment = value;
+        }
+
+        public int ArmorEquipment
+        {
+            get => armorEquipment;
+            set => armorEquipment = value;
+        }
+
+        public int Manpower
+        {
+            get => manpower;
+            set => manpower = value;
+        }
+
         public BattalionData(GameObject gameObject, int id, BattalionTypes battalionType, Dirs dir)
         {
             this.dir = dir;
@@ -211,6 +240,11 @@ namespace Script.Battalion
                     Att = AttLow;
                     Def = DefNormal;
 
+                    infantryEquipment = 100;
+                    artilleryEquipment = 0;
+                    armorEquipment = 0;
+                    manpower = 1000;
+
                     Ints = new int[3, 2]
                     {
                         { 1, 1 },
@@ -225,6 +259,12 @@ namespace Script.Battalion
                     ReOp = ReOpLow;
                     Att = AttNormal;
                     Def = DefHigh;
+                    
+                    infantryEquipment = 0;
+                    artilleryEquipment = 36;
+                    armorEquipment = 0;
+                    manpower = 500;
+                    
                     Ints = new int[3, 4]
                     {
                         { 0, 1, 1, 0 },
@@ -239,6 +279,12 @@ namespace Script.Battalion
                     ReOp = ReOpNormal;
                     Att = AttHigh;
                     Def = DefNormal;
+                    
+                    infantryEquipment = 0;
+                    artilleryEquipment = 0;
+                    armorEquipment = 50;
+                    manpower = 500;
+                    
                     Ints = new int[3, 4]
                     {
                         { 1, 0, 0, 1 },
@@ -265,5 +311,4 @@ namespace Script.Battalion
             _Def = 1;
         }
     }
-    
 }

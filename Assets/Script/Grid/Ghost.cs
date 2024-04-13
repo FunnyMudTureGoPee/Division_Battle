@@ -7,14 +7,14 @@ namespace Script.Grid
     public class Ghost : MonoBehaviour
     {
         [SerializeField] private GameObject ghost;
-        private GridManger gm;
+        private DivisionManger gm;
         private Grid _grid;
 
         private void Start()
         {
         
-            _grid = gameObject.GetComponent<GridManger>().Grid;
-            gm = gameObject.GetComponent<GridManger>();
+            _grid = gameObject.GetComponent<DivisionManger>().Grid;
+            gm = gameObject.GetComponent<DivisionManger>();
         }
 
         private void LateUpdate()
