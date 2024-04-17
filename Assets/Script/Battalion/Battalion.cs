@@ -92,6 +92,10 @@ namespace Script.Battalion
             {
                 BattalionData.BuffList.Add(new Buff("Buff_LowOp"));
                 isLowOp = true;
+                if (BattalionData.Op<=0)
+                {
+                    BattalionData.Op = 0;
+                }
             }
             foreach (var o in gameObjects)
             {

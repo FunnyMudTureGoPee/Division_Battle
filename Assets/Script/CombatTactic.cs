@@ -68,8 +68,8 @@ namespace Script
             //执行方法
             method.Invoke(obj, this.parameters ?? parameters);
         }
-        
-        public object Run(bool isReturn ,object[] parameters = null)
+
+        public object Run(bool isReturn, object[] parameters = null)
         {
             var type = typeof(CombatTactic);
             var method = type.GetMethod(funName);
@@ -77,7 +77,7 @@ namespace Script
                 throw new NullReferenceException("方法" + funName + "不存在");
             CombatTactic obj = new CombatTactic(funName);
             //执行方法
-           return method.Invoke(obj, this.parameters ?? parameters);
+            return method.Invoke(obj, this.parameters ?? parameters);
         }
 
         //////////////////////////////////////////////////////////////////
@@ -91,18 +91,24 @@ namespace Script
         /// <returns></returns>
         public int Attack(OutputData outputData)
         {
+            var ATTtemp = outputData.ATT;
+            var DEFtemp = outputData.DEF;
+            outputData.ATT = ATTtemp * 0.8 + DEFtemp * 0.2;
+            outputData.DEF = ATTtemp * 0.3 + DEFtemp * 0.2;
             return 1;
         }
-        
+
         public int Guerrilla(OutputData outputData)
         {
-            outputData.ATT *= 0.25;
-            outputData.DEF *= 2;
-            return 2;
+            var ATTtemp = outputData.ATT;
+            var DEFtemp = outputData.DEF;
+            outputData.ATT = ATTtemp * 0.1 + DEFtemp * 0.15;
+            outputData.DEF = DEFtemp * 1.5 + ATTtemp * 0.25;
+            return 3;
         }
 
         //////////////////////////////////////////////////////////////////
-        ///防御战术卡 组织度恢复提升，防御提升
+        ///防御战术卡 防御提升
         //////////////////////////////////////////////////////////////////
 
         /// <summary>
@@ -110,10 +116,24 @@ namespace Script
         /// </summary>
         /// <param name="outputData"></param>
         /// <returns></returns>
-        public int  Defend(OutputData outputData)
+        public int Defend(OutputData outputData)
         {
-            outputData.ReOP *= 1.2;
-            outputData.DEF *= 1.2;
+            var ATTtemp = outputData.ATT;
+            var DEFtemp = outputData.DEF;
+            outputData.ATT = ATTtemp * 0.2 + DEFtemp * 0.3;
+            outputData.DEF = ATTtemp * 0.2 + DEFtemp * 0.8;
+            return 1;
+        }
+
+        /// <summary>
+        /// 基础防御 
+        /// </summary>
+        /// <param name="outputData"></param>
+        /// <returns></returns>
+        public int Default(OutputData outputData)
+        {
+            outputData.DEF *= 0.9;
+            outputData.ATT *= 0.9;
             return 1;
         }
     }

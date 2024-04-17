@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Script.Battalion;
 using Script.Grid;
 using UnityEngine;
@@ -13,10 +13,15 @@ namespace Script
         [SerializeField] private GameObject friendGridPanel;
         [SerializeField] private GameObject enemyGridPanel;
         [SerializeField] private GameObject pfTacticCard;
+        [SerializeField] private GameObject pfBattalInformation;
         [Tooltip("缴获系数")] [SerializeField] private double captureCoefficient;
 
         private CombatTactic fCombatTactic;
         private CombatTactic eCombatTactic;
+
+        List<(string name, int cost)> fTactics = new List<(string name, int cost)>();
+        List<(string name, int cost)> eTactics = new List<(string name, int cost)>();
+
 
         private int fIntelligenceValue;
         private int eIntelligenceValue;
@@ -26,8 +31,11 @@ namespace Script
 
         private void Start()
         {
-            friendGridPanel = GameObject.Find("FriendGridPanel");
-            enemyGridPanel = GameObject.Find("EnemyGridPanel");
+            SetTactics(false,
+                new List<(string name, int cost)>() { ("Default", 0), ("Defend", 1), ("Attack", 2), ("Guerrilla", 3) });
+            SetTactics(true,
+                new List<(string name, int cost)>() { ("Default", 0), ("Defend", 1), ("Attack", 2), ("Guerrilla", 3) });
+
             InitTurn();
         }
 
@@ -36,9 +44,70 @@ namespace Script
             turn = 0;
         }
 
-        public void test()
+        public void test1()
         {
-            
+            InitTurn();
+            BattleStart();
+        }
+
+        public void test2()
+        {
+            InitTacticCard();
+            Battle(fCombatTactic, eCombatTactic);
+        }
+
+        public void SetTactics(bool isEnemy, List<(string name, int cost)> list)
+        {
+            if (isEnemy)
+            {
+                eTactics = list;
+            }
+            else
+            {
+                fTactics = list;
+            }
+        }
+
+        private void InitTacticCard()
+        {
+            eTactics = eTactics.OrderByDescending(t => t.cost).ToList();
+            foreach (var tactic in eTactics)
+            {
+                if (eIntelligenceValue >= tactic.cost)
+                {
+                    eCombatTactic = new CombatTactic(tactic.name);
+                    eIntelligenceValue -= tactic.cost;
+                    break;
+                }
+                else
+                {
+                    eCombatTactic = new CombatTactic("Default");
+                }
+            }
+        }
+
+        public void Button2Next(GameObject gameObject)
+        {
+            if (friendGridPanel.transform.Find("Information").GetComponent<Information>()
+                    .ListLength == 0 ||
+                enemyGridPanel.transform.Find("Information").GetComponent<Information>()
+                    .ListLength == 0)
+            {
+                BattleEnd();
+                Destroy(gameObject);
+                return;
+            }
+
+            if (fIntelligenceValue == 0 && eIntelligenceValue == 0)
+            {
+                BattleStart();
+            }
+            else
+            {
+                CreatTacticCard(fIntelligenceValue);
+            }
+
+            Destroy(gameObject);
         }
 
         /// <summary>
@@ -46,6 +115,25 @@ namespace Script
         /// </summary>
         public void BattleStart()
         {
+            turn++;
+
+            foreach (var variaBattalionData in friendGridPanel.transform.Find("Information").GetComponent<Information>()
+                         .BattalionDatas)
+            {
+                if (variaBattalionData.Op >= variaBattalionData.MaxOp) continue;
+                variaBattalionData.Op += variaBattalionData.ReOp;
+            }
+
+            foreach (var variaBattalionData in enemyGridPanel.transform.Find("Information").GetComponent<Information>()
+                         .BattalionDatas)
+            {
+                if (variaBattalionData.Op >= variaBattalionData.MaxOp) continue;
+                variaBattalionData.Op += variaBattalionData.ReOp;
+            }
+
+            friendGridPanel.transform.Find("Information").GetComponent<Information>().Refresh();
+            enemyGridPanel.transform.Find("Information").GetComponent<Information>().Refresh();
+
             fIntelligenceValue = CalculateIntelligenceValue(false);
             eIntelligenceValue = CalculateIntelligenceValue(true);
             CreatTacticCard(fIntelligenceValue);
@@ -61,9 +149,11 @@ namespace Script
         public void SetfTacticCard(string tacticname, int cost, GameObject itself)
         {
             fIntelligenceValue -= cost;
-            Debug.Log("cost:-" + cost);
+            // Debug.Log("cost:-" + cost);
             fCombatTactic = new CombatTactic(tacticname);
             CreatTacticCard(fIntelligenceValue);
+            // 选择战术后直接开战
+            test2();
         }
 
         /// <summary>
@@ -79,23 +169,20 @@ namespace Script
             }
 
             Vector3 offset = new Vector3(0, 0, 0);
-            List<(string name, int cost)> Tactics = new List<(string name, int cost)>();
-            Tactics.Add(("Defend", 1));
-            Tactics.Add(("Attack", 2));
-            Tactics.Add(("Guerrilla", 3));
-            for (int i = 0; i < Tactics.Count; i++)
+
+            for (int i = 0; i < fTactics.Count; i++)
             {
                 GameObject pf = Instantiate(pfTacticCard, tfTacticCardList);
                 pf.transform.position += offset;
                 offset += new Vector3(pf.GetComponent<RectTransform>().rect.width, 0, 0);
-                if (Tactics[i].cost > intelligenceValue)
+                if (fTactics[i].cost > intelligenceValue)
                 {
                     Destroy(pf);
                     continue;
                 }
 
-                string tempname = Tactics[i].name;
-                var tempcost = Tactics[i].cost;
+                string tempname = fTactics[i].name;
+                var tempcost = fTactics[i].cost;
                 pf.GetComponent<Button>().onClick
                     .AddListener(delegate { SetfTacticCard(tempname, tempcost, pf); });
                 pf.transform.Find("TacticName").GetComponent<Text>().text =
@@ -110,15 +197,18 @@ namespace Script
         /// <param name="enemyTactic"></param>
         public void Battle(CombatTactic friendTactic, CombatTactic enemyTactic)
         {
-            var fData = friendGridPanel.transform.Find("Information").GetComponent<Information>().outputData;
-            var eData = enemyGridPanel.transform.Find("Information").GetComponent<Information>().outputData;
-            var fBattalionListCount = friendGridPanel.transform.Find("Information").GetComponent<Information>()
+            var fInformation = friendGridPanel.transform.Find("Information").GetComponent<Information>();
+            var eInformation = enemyGridPanel.transform.Find("Information").GetComponent<Information>();
+
+            var fData = fInformation.outputData;
+            var eData = eInformation.outputData;
+            var fBattalionListCount = fInformation
                 .BattalionDatas.Count;
-            var eBattalionListCount = enemyGridPanel.transform.Find("Information").GetComponent<Information>()
+            var eBattalionListCount = eInformation
                 .BattalionDatas.Count;
-            var fBattalionList = friendGridPanel.transform.Find("Information").GetComponent<Information>()
+            var fBattalionList = fInformation
                 .BattalionDatas;
-            var eBattalionList = enemyGridPanel.transform.Find("Information").GetComponent<Information>()
+            var eBattalionList = eInformation
                 .BattalionDatas;
             // 集火率
             var ConcentrationRate = 0.2;
@@ -129,32 +219,51 @@ namespace Script
             var fDataTemp = fData;
             var eDataTemp = eData;
 
+            double fHpdamge = 0;
+            double fOpdamge = 0;
+            double eHpdamge = 0;
+            double eOpdamge = 0;
             for (int i = 0; i < (int)ehits; i++)
             {
                 var lackyBattalion = Random.Range(0, fBattalionListCount - 1);
                 for (int j = 0; j < fBattalionListCount; j++)
                 {
-                    fBattalionList[j].Hp -= HpDamge(eDataTemp.ATT, fDataTemp.DEF) / eBattalionListCount *
+                    var hpDamge = HpDamge(eDataTemp.ATT, fDataTemp.DEF);
+                    var opDamage = OpDamage(eDataTemp.ATT, fDataTemp.DEF);
+
+                    fBattalionList[j].Hp -= hpDamge / eBattalionListCount *
                                             (1 - ConcentrationRate);
-                    fBattalionList[j].Op -= OpDamage(eDataTemp.ATT, fDataTemp.DEF) / eBattalionListCount *
+                    fBattalionList[j].Op -= opDamage / eBattalionListCount *
                                             (1 - ConcentrationRate);
-                    Debug.Log(fBattalionList[j].BattalionName + "受攻击了,hp收到：" + HpDamge(fDataTemp.ATT, eDataTemp.DEF) /
-                        fBattalionListCount *
-                        (1 - ConcentrationRate) + "点伤害，Op受到：" + OpDamage(fDataTemp.ATT, eDataTemp.DEF) /
-                        fBattalionListCount *
-                        (1 - ConcentrationRate) + "点伤害");
+
+                    // Debug.Log(fBattalionList[j].BattalionName + "受攻击了,hp收到：" + HpDamge(fDataTemp.ATT, eDataTemp.DEF) /
+                    //     fBattalionListCount *
+                    //     (1 - ConcentrationRate) + "点伤害，Op受到：" + OpDamage(fDataTemp.ATT, eDataTemp.DEF) /
+                    //     fBattalionListCount *
+                    //     (1 - ConcentrationRate) + "点伤害");
                     if (j == lackyBattalion)
                     {
-                        fBattalionList[j].Hp -= HpDamge(eDataTemp.ATT, fDataTemp.DEF) / eBattalionListCount *
+                        fHpdamge += hpDamge / eBattalionListCount *
+                                    ConcentrationRate * 10;
+                        fOpdamge += opDamage / eBattalionListCount *
+                                    ConcentrationRate * 10;
+
+                        fBattalionList[j].Hp -= hpDamge / eBattalionListCount *
                                                 ConcentrationRate * 10;
-                        fBattalionList[j].Op -= OpDamage(eDataTemp.ATT, fDataTemp.DEF) / eBattalionListCount *
+                        fBattalionList[j].Op -= opDamage / eBattalionListCount *
                                                 ConcentrationRate * 10;
-                        Debug.Log(fBattalionList[j].BattalionName + "\n aieeeeee，受暴击了,hp收到：" +
-                                  HpDamge(eDataTemp.ATT, fDataTemp.DEF) / eBattalionListCount *
-                                  ConcentrationRate * 10 + "点伤害，Op受到：" + OpDamage(eDataTemp.ATT, fDataTemp.DEF) /
-                                  eBattalionListCount *
-                                  ConcentrationRate * 10 + "点伤害");
+                        // Debug.Log(fBattalionList[j].BattalionName + "\n aieeeeee，受暴击了,hp收到：" +
+                        //           HpDamge(eDataTemp.ATT, fDataTemp.DEF) / eBattalionListCount *
+                        //           ConcentrationRate * 10 + "点伤害，Op受到：" + OpDamage(eDataTemp.ATT, fDataTemp.DEF) /
+                        //           eBattalionListCount *
+                        //           ConcentrationRate * 10 + "点伤害");
                     }
+
+
+                    fHpdamge += hpDamge / eBattalionListCount *
+                                (1 - ConcentrationRate);
+                    fOpdamge += opDamage / eBattalionListCount *
+                                (1 - ConcentrationRate);
                 }
             }
 
@@ -163,34 +272,51 @@ namespace Script
                 var lackyBattalion = Random.Range(0, eBattalionListCount - 1);
                 for (int j = 0; j < eBattalionListCount; j++)
                 {
-                    eBattalionList[j].Hp -= HpDamge(fDataTemp.ATT, eDataTemp.DEF) / fBattalionListCount *
+                    var hpDamge = HpDamge(fDataTemp.ATT, eDataTemp.DEF);
+                    var opDamage = OpDamage(fDataTemp.ATT, eDataTemp.DEF);
+                    eBattalionList[j].Hp -= hpDamge / fBattalionListCount *
                                             (1 - ConcentrationRate);
-                    eBattalionList[j].Op -= OpDamage(fDataTemp.ATT, eDataTemp.DEF) / fBattalionListCount *
+
+                    eBattalionList[j].Op -= opDamage / fBattalionListCount *
                                             (1 - ConcentrationRate);
 
                     if (j == lackyBattalion)
                     {
-                        eBattalionList[j].Hp -= HpDamge(fDataTemp.ATT, eDataTemp.DEF) / fBattalionListCount *
+                        eBattalionList[j].Hp -= hpDamge / fBattalionListCount *
                                                 ConcentrationRate * 10;
-                        eBattalionList[j].Op -= OpDamage(fDataTemp.ATT, eDataTemp.DEF) / fBattalionListCount *
+                        eBattalionList[j].Op -= opDamage / fBattalionListCount *
                                                 ConcentrationRate * 10;
+                        eHpdamge += hpDamge / fBattalionListCount *
+                                    (1 - ConcentrationRate);
+                        eOpdamge += opDamage / fBattalionListCount *
+                                    (1 - ConcentrationRate);
                     }
+
+                    eHpdamge += hpDamge / fBattalionListCount *
+                                (1 - ConcentrationRate);
+                    eOpdamge += opDamage / fBattalionListCount *
+                                (1 - ConcentrationRate);
                 }
             }
 
-            foreach (var variaBattalionData in fBattalionList)
-            {
-                if (variaBattalionData.Op >= variaBattalionData.MaxOp) continue;
-                variaBattalionData.Op += variaBattalionData.ReOp;
-            }
 
-            foreach (var variaBattalionData in eBattalionList)
+            fInformation.Refresh();
+            eInformation.Refresh();
+            GameObject nextButton =
+                Instantiate(pfBattalInformation, gameObject.transform.Find("BattleInformation"));
+            nextButton.transform.Find("Button").GetComponent<Button>().onClick.AddListener(delegate
             {
-                if (variaBattalionData.Op >= variaBattalionData.MaxOp) continue;
-                variaBattalionData.Op += variaBattalionData.ReOp;
+                Button2Next(nextButton);
+            });
+            nextButton.transform.Find("Information").GetComponent<Text>().text = turn + "\n" + "我方情报：" +
+                fIntelligenceValue + "敌方情报" + eIntelligenceValue +
+                "我方采取" + friendTactic.funName + "战术\n" + "敌方采取" + enemyTactic.funName + "战术\n" + "此战我方兵力损失：" +
+                fHpdamge.ToString("F2") + "士气损失：" + fOpdamge.ToString("F2") +
+                "对敌方造成兵力损失：" + eHpdamge.ToString("F2") + "士气损失：" + eOpdamge.ToString("F2");
+            if (fOpdamge <= eOpdamge || fHpdamge <= eHpdamge)
+            {
+                nextButton.transform.Find("Button").Find("ButtonText").GetComponent<Text>().text = "优势在我";
             }
-
-            turn++;
         }
 
         public void BattleEnd()
@@ -214,7 +340,7 @@ namespace Script
             message += "步枪装备：" + inf + "\n";
             message += "火炮：" + art + "\n";
             message += "装甲：" + arm + "\n";
-            Debug.Log(message);
+            Debug.LogError(message);
         }
 
 
@@ -298,7 +424,7 @@ namespace Script
             // 破防伤害
             if (temp >= 0)
             {
-                damage += temp * 4;
+                damage += temp * att / def;
             }
 
             // 随机伤害+保底伤害

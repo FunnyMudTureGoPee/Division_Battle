@@ -1,1 +1,1 @@
-{"name":"test","level":0,"battalionDatas":[{"x":6,"y":5,"dirs":0,"types":0,"id":123},{"x":6,"y":8,"dirs":0,"types":0,"id":123},{"x":8,"y":8,"dirs":0,"types":0,"id":123},{"x":10,"y":8,"dirs":0,"types":0,"id":123}],"width":16,"high":22}
+{"name":"test","level":0,"battalionDatas":[{"x":4,"y":8,"dirs":0,"types":0,"id":123},{"x":6,"y":11,"dirs":3,"types":0,"id":123},{"x":6,"y":11,"dirs":1,"types":1,"id":123},{"x":10,"y":11,"dirs":3,"types":0,"id":123},{"x":10,"y":10,"dirs":2,"types":0,"id":123}],"width":16,"high":22}
