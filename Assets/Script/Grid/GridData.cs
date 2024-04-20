@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Script.Battalion;
+using Unity.Burst.Intrinsics;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -14,7 +15,7 @@ namespace Script.Grid
         public BattalionData.BattalionTypes types;
         public int id;
 
-        
+
         public battalionData(int x, int y, BattalionData.Dirs dirs, BattalionData.BattalionTypes types, int id)
         {
             this.x = x;
@@ -30,6 +31,9 @@ namespace Script.Grid
     {
         public string name;
         public int level;
+        public BattalionData.BattalionTypes Type;
+        public int IC=0;
+        public int Manpower=0;
         public List<battalionData> battalionDatas = new List<battalionData>();
         public int width, high;
 
@@ -45,6 +49,45 @@ namespace Script.Grid
             high = battalions.GetLength(1);
 
             Array2List(battalions);
+            int infCount = 0;
+            int artCount = 0;
+            int armCount = 0;
+
+            foreach (var battalion in battalionDatas)
+            {
+                switch (battalion.types)
+                {
+                    case BattalionData.BattalionTypes.Infantry:
+
+                        infCount++;
+                        break;
+                    case BattalionData.BattalionTypes.Artillery:
+                        artCount++;
+                        break;
+                    case BattalionData.BattalionTypes.Armor:
+                        armCount++;
+                        break;
+                }
+
+                IC += Functions.Functions.CalculateIC(battalion.types);
+                Manpower += Functions.Functions.CalculateMapower(battalion.types);
+            }
+
+            // 确定最大的count数
+            int maxCount = Mathf.Max(infCount, artCount, armCount);
+
+            if (maxCount == infCount)
+            {
+                Type = BattalionData.BattalionTypes.Infantry;
+            }
+            else if (maxCount == artCount)
+            {
+                Type = BattalionData.BattalionTypes.Artillery;
+            }
+            else
+            {
+                Type = BattalionData.BattalionTypes.Armor;
+            }
         }
 
         private void Array2List(GameObject[,] battalions)
@@ -58,13 +101,12 @@ namespace Script.Grid
                 int offset_x, offset_y;
                 if (checkObjects.Count == 0)
                 {
-                    
                     checkObjects.Add(battalionData);
                     offset_x = GetOffset(battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
                         battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType).x;
                     offset_y = GetOffset(battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
                         battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType).y;
-                    battalionDatas.Add(new battalionData(i0+offset_x, i1+offset_y,
+                    battalionDatas.Add(new battalionData(i0 + offset_x, i1 + offset_y,
                         battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
                         battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType,
                         battalionData.GetComponent<Battalion.Battalion>().BattalionData.ID));
@@ -85,7 +127,7 @@ namespace Script.Grid
                     battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType).x;
                 offset_y = GetOffset(battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
                     battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType).y;
-                battalionDatas.Add(new battalionData(i0+offset_x, i1+offset_y,
+                battalionDatas.Add(new battalionData(i0 + offset_x, i1 + offset_y,
                     battalionData.GetComponent<Battalion.Battalion>().BattalionData.Dir,
                     battalionData.GetComponent<Battalion.Battalion>().BattalionData.BattalionType,
                     battalionData.GetComponent<Battalion.Battalion>().BattalionData.ID));
@@ -94,7 +136,7 @@ namespace Script.Grid
 
         private (int x, int y) GetOffset(BattalionData.Dirs dir, BattalionData.BattalionTypes type)
         {
-            int offset_x=0, offset_y=0;
+            int offset_x = 0, offset_y = 0;
             switch (type)
             {
                 case BattalionData.BattalionTypes.Infantry:
@@ -113,6 +155,7 @@ namespace Script.Grid
                             offset_x += 2;
                             break;
                     }
+
                     break;
                 case BattalionData.BattalionTypes.Artillery:
                     switch (dir)
@@ -132,6 +175,7 @@ namespace Script.Grid
                             offset_y -= 1;
                             break;
                     }
+
                     break;
                 case BattalionData.BattalionTypes.Armor:
                     switch (dir)
@@ -150,6 +194,7 @@ namespace Script.Grid
                             offset_y -= 1;
                             break;
                     }
+
                     break;
             }
 

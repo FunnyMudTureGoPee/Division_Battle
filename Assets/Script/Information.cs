@@ -45,7 +45,7 @@ namespace Script
         private Text reopText;
         private Text attText;
         private Text defText;
-
+        private string divisionName;
 
         private void Start()
         {
@@ -108,5 +108,19 @@ namespace Script
             attText.text = ATT.ToString("F2");
             defText.text = DEF.ToString("F2");
         }
+
+        public void SaveName()
+        {
+            divisionName = transform.Find("Name").Find("value").GetComponent<Text>().text;
+            Debug.Log("Rename:"+divisionName);
+        }
+
+        public string DivisionName
+        {
+            get => divisionName;
+            set => divisionName = value;
+        }
     }
+
+    
 }

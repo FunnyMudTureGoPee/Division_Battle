@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using Script.Grid;
 using UnityEngine;
 using Types = Script.Battalion.BattalionData.BattalionTypes;
@@ -36,17 +37,14 @@ namespace Script.Battalion
         {
             if (BattalionData.Hp <= 0)
             {
-                gameObject.transform.parent.parent.Find("DivisionManger").GetComponent<DivisionManger>()
-                    .Grid.RemoveBattalion(gameObject);
-                GameObject.Find("BattleManager").GetComponent<BattleManager>().LostBattalionDatas.Add(BattalionData);
-                Destroy(gameObject);
+                Die();
             }
 
-            if (BattalionData.Op<=5&&isLowOp is false)
+            if (BattalionData.Op <= 5 && isLowOp is false)
             {
                 BattalionData.BuffList.Add(new Buff("Buff_LowOp"));
                 isLowOp = true;
-                if (BattalionData.Op<=0)
+                if (BattalionData.Op <= 0)
                 {
                     BattalionData.Op = 0;
                 }
@@ -54,11 +52,11 @@ namespace Script.Battalion
 
             if (isLowOp)
             {
-               var index= BattalionData.BuffList.FindIndex(e => e.funName == "Buff_LowOp");
-               BattalionData.BuffList.RemoveAt(index);
-               isLowOp = false;
+                var index = BattalionData.BuffList.FindIndex(e => e.funName == "Buff_LowOp");
+                BattalionData.BuffList.RemoveAt(index);
+                isLowOp = false;
             }
-          
+
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
@@ -79,6 +77,14 @@ namespace Script.Battalion
             }
         }
 
+        public void Die()
+        {
+            gameObject.transform.parent.parent.Find("DivisionManger").GetComponent<DivisionManger>()
+                .Grid.RemoveBattalion(gameObject);
+            GameObject.Find("BattleManager").GetComponent<BattleManager>().LostBattalionDatas.Add(BattalionData);
+            Destroy(gameObject);            
+        }
+
         /// <summary>
         /// 检测并获取自身可获得的动态buff
         /// </summary>
@@ -88,15 +94,16 @@ namespace Script.Battalion
             List<GameObject> gameObjects = gameObject.transform.parent.parent.Find("DivisionManger")
                 .GetComponent<DivisionManger>().DetectAdjacentCellProperties(gameObject);
             BattalionData.BuffList.Clear();
-            if (BattalionData.Op<=5&&isLowOp is false)
+            if (BattalionData.Op <= 5 && isLowOp is false)
             {
                 BattalionData.BuffList.Add(new Buff("Buff_LowOp"));
                 isLowOp = true;
-                if (BattalionData.Op<=0)
+                if (BattalionData.Op <= 0)
                 {
                     BattalionData.Op = 0;
                 }
             }
+
             foreach (var o in gameObjects)
             {
                 string Buff = "Buff_";

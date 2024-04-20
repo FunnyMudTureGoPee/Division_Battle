@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Script.Battalion;
 using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
 using Types = Script.Battalion.BattalionData.BattalionTypes;
 
 namespace Script.Grid
@@ -19,7 +21,7 @@ namespace Script.Grid
         [SerializeField] private int manpower;
         [SerializeField] private int IC;
 
-        [Tooltip("目标对象")] [SerializeField] private GameObject _gameObject; //目标对象
+        [Tooltip("目标对象")] [SerializeField] private GameObject aimPanel; //目标对象
 
         private Transform aimTransform;
 
@@ -252,24 +254,24 @@ namespace Script.Grid
 
         private void Awake()
         {
-            aimTransform = _gameObject.transform.Find("BattalionList");
-            if (_gameObject)
+            aimTransform = aimPanel.transform.Find("BattalionList");
+            if (aimPanel)
             {
                 if (isAutoSet)
                 {
-                    width = (int)(_gameObject.GetComponent<RectTransform>().rect.width / cellsize);
-                    heigth = (int)(_gameObject.GetComponent<RectTransform>().rect.height / cellsize);
+                    width = (int)(aimPanel.GetComponent<RectTransform>().rect.width / cellsize);
+                    heigth = (int)(aimPanel.GetComponent<RectTransform>().rect.height / cellsize);
                 }
 
-                Grid = new Script.Grid.Grid(width, heigth, cellsize, _gameObject,
-                    new Vector3(-_gameObject.GetComponent<RectTransform>().rect.width / 2,
-                        -_gameObject.GetComponent<RectTransform>().rect.height / 2, 0));
+                Grid = new Script.Grid.Grid(width, heigth, cellsize, aimPanel,
+                    new Vector3(-aimPanel.GetComponent<RectTransform>().rect.width / 2,
+                        -aimPanel.GetComponent<RectTransform>().rect.height / 2, 0));
             }
             else
             {
-                Grid = new Script.Grid.Grid(width, heigth, cellsize, _gameObject,
-                    new Vector3(-_gameObject.GetComponent<RectTransform>().rect.width / 2,
-                        -_gameObject.GetComponent<RectTransform>().rect.height / 2, 0));
+                Grid = new Script.Grid.Grid(width, heigth, cellsize, aimPanel,
+                    new Vector3(-aimPanel.GetComponent<RectTransform>().rect.width / 2,
+                        -aimPanel.GetComponent<RectTransform>().rect.height / 2, 0));
             }
         }
 
@@ -400,6 +402,7 @@ namespace Script.Grid
                 manpower += battalion.BattalionData.Manpower;
                 Grid.RemoveBattalion(g);
             }
+
             Destroy(g);
         }
 
@@ -495,6 +498,34 @@ namespace Script.Grid
                 case 2:
                     Types = BattalionData.BattalionTypes.Armor;
                     break;
+            }
+        }
+
+        public void SaveDivision()
+        {
+            string dividsonName = aimPanel.transform.Find("Information").GetComponent<Information>().DivisionName;
+            int level = aimPanel.transform.Find("Information").GetComponent<Information>().ListLength;
+            GridData gridData = new GridData(dividsonName, level, Grid.Battalions);
+            Functions.Functions.SaveByJson("user/" + dividsonName, gridData);
+        }
+
+        public void LoadDivision(GridData gridData)
+        {
+            foreach (Transform o in gameObject.transform.parent.Find("BattalionList"))
+            {
+                o.GetComponent<Battalion.Battalion>().Die();
+                infantryEquipment += o.GetComponent<Battalion.Battalion>().BattalionData.InfantryEquipment;
+                artilleryEquipment += o.GetComponent<Battalion.Battalion>().BattalionData.ArtilleryEquipment;
+                armorEquipment += o.GetComponent<Battalion.Battalion>().BattalionData.ArmorEquipment;
+                manpower += o.GetComponent<Battalion.Battalion>().BattalionData.Manpower;
+            }
+
+            gameObject.transform.parent.Find("Information").Find("Name").GetComponent<InputField>().text =
+                gridData.name;
+            foreach (var varBattalionData in gridData.battalionDatas)
+            {
+                CreatBattalion(varBattalionData.x, varBattalionData.y,
+                    varBattalionData.dirs, varBattalionData.types);
             }
         }
     }

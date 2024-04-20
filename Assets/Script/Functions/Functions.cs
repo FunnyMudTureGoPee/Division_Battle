@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.IO;
 using System.Xml;
 using LitJson;
+using Script.Battalion;
 using Script.Grid;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -125,7 +127,16 @@ namespace Script.Functions
 
         public static GridData LoadByJson(string filename)
         {
-            string datePath = Application.dataPath + "/SaveFiles" + "/" + filename + ".json";
+            string datePath;
+            if (filename.EndsWith(".json"))
+            {
+                 datePath = Application.dataPath + "/SaveFiles" + "/" + filename;
+            }
+            else
+            {
+                datePath = Application.dataPath + "/SaveFiles" + "/" + filename + ".json";
+
+            }
             if (File.Exists(datePath)) //判断这个路径里面是否为空
             {
                 StreamReader sr = new StreamReader(datePath); //创建读取流;
@@ -169,7 +180,41 @@ namespace Script.Functions
             return gameObject.GetComponent<Button>();
         }
 
-        
+        public static int CalculateIC(BattalionData.BattalionTypes type)
+        {
+            switch (type)
+            {
+                case BattalionData.BattalionTypes.Infantry:
+                    return (int)(100 * 0.5);
+                    break;
+                case BattalionData.BattalionTypes.Artillery:
+                    return (int)(36 * 5);
+                    break;
+                case BattalionData.BattalionTypes.Armor:
+                    return (int)(50 * 10);
+                    break;
+            }
+
+            return 0;
+        }
+        public static int CalculateMapower(BattalionData.BattalionTypes type)
+        {
+            switch (type)
+            {
+                case BattalionData.BattalionTypes.Infantry:
+                    return 1000;
+                    break;
+                case BattalionData.BattalionTypes.Artillery:
+                    return 500;
+                    break;
+                case BattalionData.BattalionTypes.Armor:
+                    return 500;
+                    break;
+            }
+
+            return 0;
+        }
+
 
         private class MonoStub : MonoBehaviour
         {
