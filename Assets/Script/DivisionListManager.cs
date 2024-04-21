@@ -18,8 +18,16 @@ namespace Script
 
         void Start()
         {
-            ExploreDirectory(folderPath);
             context = gameObject.GetComponent<ScrollRect>().content;
+            Refresh();
+        }
+
+        public void Refresh()
+        {
+            
+            
+            ExploreDirectory(folderPath);
+
             CreatItem();
         }
 
@@ -27,7 +35,7 @@ namespace Script
         {
             foreach (Transform o in context)
             {
-                Destroy(o);
+                Destroy(o.gameObject);
             }
 
             Vector3 offset = new Vector3(0, -this.offset, 0);
@@ -51,7 +59,6 @@ namespace Script
 
                 item.transform.Find("Name").GetComponent<Text>().text = gridData.name;
                 GridData gd = gridData;
-                Debug.Log(gd.name);
                 item.transform.Find("Buttons").Find("Edit").GetComponent<Button>().onClick.AddListener(delegate
                 {
                     LoadDivision(gd);
@@ -61,6 +68,11 @@ namespace Script
                 {
                     DeleteDivision(s, item);
                 });
+
+                item.transform.Find("Cost").Find("manpower").Find("value").GetComponent<Text>().text =
+                    gridData.Manpower+"";
+                item.transform.Find("Cost").Find("ic").Find("value").GetComponent<Text>().text =
+                    gridData.IC+"";
             }
         }
 
@@ -88,6 +100,7 @@ namespace Script
 
         void ExploreDirectory(string path)
         {
+            GridDatas.Clear();
             // 确保路径存在
             if (Directory.Exists(path))
             {
@@ -98,8 +111,6 @@ namespace Script
                 foreach (FileInfo file in files)
                 {
                     if (file.Name.EndsWith(".meta"))continue;
-                    // 打印文件的路径
-                    Debug.Log("文件名: " + file.Name);
                     
                     GridDatas.Add(Functions.Functions.LoadByJson("user/" + file.Name));
                 }
@@ -108,6 +119,11 @@ namespace Script
             {
                 Debug.LogError("目录不存在: " + path);
             }
+        }
+
+        public void CreateNewDivision()
+        {
+            friendPanel.transform.Find("DivisionManger").GetComponent<DivisionManger>().InitDivision();
         }
     }
 }

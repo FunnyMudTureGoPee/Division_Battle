@@ -1,41 +1,30 @@
 {
-  "name": "五步师",
-  "level": 5,
+  "name": "三步师",
+  "level": 3,
   "Type": 0,
-  "IC": 250,
-  "Manpower": 5000,
+  "IC": 150,
+  "infantryEquipment": 300,
+  "artilleryEquipment": 0,
+  "armorEquipment": 0,
+  "Manpower": 3000,
   "battalionDatas": [
     {
       "x": 3,
-      "y": 6,
-      "dirs": 0,
-      "types": 0,
-      "id": 123
-    },
-    {
-      "x": 3,
-      "y": 9,
+      "y": 12,
       "dirs": 0,
       "types": 0,
       "id": 123
     },
     {
       "x": 5,
-      "y": 6,
-      "dirs": 0,
-      "types": 0,
-      "id": 123
-    },
-    {
-      "x": 5,
-      "y": 9,
+      "y": 11,
       "dirs": 0,
       "types": 0,
       "id": 123
     },
     {
       "x": 7,
-      "y": 6,
+      "y": 12,
       "dirs": 0,
       "types": 0,
       "id": 123

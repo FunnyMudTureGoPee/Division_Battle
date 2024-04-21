@@ -32,8 +32,11 @@ namespace Script.Grid
         public string name;
         public int level;
         public BattalionData.BattalionTypes Type;
-        public int IC=0;
-        public int Manpower=0;
+        public int IC = 0;
+        public int infantryEquipment = 0;
+        public int artilleryEquipment = 0;
+        public int armorEquipment = 0;
+        public int Manpower = 0;
         public List<battalionData> battalionDatas = new List<battalionData>();
         public int width, high;
 
@@ -60,11 +63,14 @@ namespace Script.Grid
                     case BattalionData.BattalionTypes.Infantry:
 
                         infCount++;
+                        infantryEquipment += 100;
                         break;
                     case BattalionData.BattalionTypes.Artillery:
                         artCount++;
+                        artilleryEquipment += 36;
                         break;
                     case BattalionData.BattalionTypes.Armor:
+                        armorEquipment += 50;
                         armCount++;
                         break;
                 }

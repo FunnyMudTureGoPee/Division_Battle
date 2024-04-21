@@ -1122,7 +1122,7 @@ GameObject:
   - component: {fileID: 8397448118280140819}
   - component: {fileID: 3451136833621164653}
   m_Layer: 0
-  m_Name: ic
+  m_Name: manpower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

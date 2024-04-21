@@ -332,11 +332,12 @@ namespace Script
                 arm += (int)(lost.ArmorEquipment * captureCoefficient);
             }
 
-            DivisionManger gm = friendGridPanel.transform.Find("DivisionManger").GetComponent<DivisionManger>();
-            gm.InfantryEquipment += inf;
-            gm.ArtilleryEquipment += art;
-            gm.ArmorEquipment += arm;
+            Economic ec = GameObject.Find("MainController").transform.Find("EconomicPanel").GetComponent<Economic>();
+            ec.factories[0].Inventory.Value += inf;
+            ec.factories[1].Inventory.Value += art;
+            ec.factories[2].Inventory.Value += arm;
 
+            
             message += "步枪装备：" + inf + "\n";
             message += "火炮：" + art + "\n";
             message += "装甲：" + arm + "\n";

@@ -396,10 +396,12 @@ namespace Script.Grid
             if (g is not null)
             {
                 Battalion.Battalion battalion = g.GetComponent<Battalion.Battalion>();
-                infantryEquipment += battalion.BattalionData.InfantryEquipment;
-                artilleryEquipment += battalion.BattalionData.ArtilleryEquipment;
-                armorEquipment += battalion.BattalionData.ArmorEquipment;
-                manpower += battalion.BattalionData.Manpower;
+                infantryEquipment -= battalion.BattalionData.InfantryEquipment;
+                artilleryEquipment -= battalion.BattalionData.ArtilleryEquipment;
+                armorEquipment -= battalion.BattalionData.ArmorEquipment;
+                manpower -= battalion.BattalionData.Manpower;
+                Ic -= Functions.Functions.CalculateIC(g.GetComponent<Battalion.Battalion>().BattalionData
+                    .BattalionType);
                 Grid.RemoveBattalion(g);
             }
 
@@ -429,36 +431,25 @@ namespace Script.Grid
 
             // 获取一次组件引用并存储在局部变量中
             Battalion.Battalion battalion = gameObject.GetComponent<Battalion.Battalion>();
+            
+            infantryEquipment += battalion.BattalionData.InfantryEquipment;
+            artilleryEquipment += battalion.BattalionData.ArtilleryEquipment;
+            armorEquipment += battalion.BattalionData.ArmorEquipment;
+            manpower += battalion.BattalionData.Manpower;
+            Ic += Functions.Functions.CalculateIC(battalion.BattalionData
+                .BattalionType);
 
-            // 提取条件到变量中
-            bool hasEnoughInfantry = infantryEquipment - battalion.BattalionData.InfantryEquipment >= 0;
-            bool hasEnoughArtillery = artilleryEquipment - battalion.BattalionData.ArtilleryEquipment >= 0;
-            bool hasEnoughArmor = armorEquipment - battalion.BattalionData.ArmorEquipment >= 0;
-            bool hasEnoughManpower = manpower - battalion.BattalionData.Manpower >= 0;
-
-            // 使用变量简化if判断
-            if (hasEnoughInfantry && hasEnoughArtillery && hasEnoughArmor && hasEnoughManpower)
-            {
-                infantryEquipment -= battalion.BattalionData.InfantryEquipment;
-                artilleryEquipment -= battalion.BattalionData.ArtilleryEquipment;
-                armorEquipment -= battalion.BattalionData.ArmorEquipment;
-                manpower -= battalion.BattalionData.Manpower;
-            }
-            else
-            {
-                Destroy(gameObject);
-                Functions.Functions.CreateTip("缺少资源", Functions.Functions.GetMouseWorldPosition(), 2f);
-                return;
-            }
 
             // 检查是否可以在网格上添加营
             if (!Grid.AddBattalion(x, y, gameObject, out List<(int X, int Y)> list))
             {
                 // 如果不可以，则撤销之前的资源扣除
-                infantryEquipment += battalion.BattalionData.InfantryEquipment;
-                artilleryEquipment += battalion.BattalionData.ArtilleryEquipment;
-                armorEquipment += battalion.BattalionData.ArmorEquipment;
-                manpower += battalion.BattalionData.Manpower;
+                infantryEquipment -= battalion.BattalionData.InfantryEquipment;
+                artilleryEquipment -= battalion.BattalionData.ArtilleryEquipment;
+                armorEquipment -= battalion.BattalionData.ArmorEquipment;
+                manpower -= battalion.BattalionData.Manpower;
+                Ic -= Functions.Functions.CalculateIC(battalion.BattalionData
+                    .BattalionType);
                 Destroy(gameObject);
                 Functions.Functions.CreateTip("无法放置", Functions.Functions.GetMouseWorldPosition(), 2f);
             }
@@ -468,6 +459,7 @@ namespace Script.Grid
             {
                 gameObject.GetComponent<Battalion.Battalion>().BattalionXY = list;
             }
+            RefreshCost();
         }
 
         public void Type2Infantry()
@@ -509,16 +501,10 @@ namespace Script.Grid
             Functions.Functions.SaveByJson("user/" + dividsonName, gridData);
         }
 
+
         public void LoadDivision(GridData gridData)
         {
-            foreach (Transform o in gameObject.transform.parent.Find("BattalionList"))
-            {
-                o.GetComponent<Battalion.Battalion>().Die();
-                infantryEquipment += o.GetComponent<Battalion.Battalion>().BattalionData.InfantryEquipment;
-                artilleryEquipment += o.GetComponent<Battalion.Battalion>().BattalionData.ArtilleryEquipment;
-                armorEquipment += o.GetComponent<Battalion.Battalion>().BattalionData.ArmorEquipment;
-                manpower += o.GetComponent<Battalion.Battalion>().BattalionData.Manpower;
-            }
+            InitDivision();
 
             gameObject.transform.parent.Find("Information").Find("Name").GetComponent<InputField>().text =
                 gridData.name;
@@ -527,6 +513,33 @@ namespace Script.Grid
                 CreatBattalion(varBattalionData.x, varBattalionData.y,
                     varBattalionData.dirs, varBattalionData.types);
             }
+            RefreshCost();
+        }
+
+        public void RefreshCost()
+        {
+            Transform cost = transform.Find("Cost");
+            cost.Find("InfE").Find("value").GetComponent<Text>().text = InfantryEquipment+"";
+            cost.Find("ArtE").Find("value").GetComponent<Text>().text = ArtilleryEquipment+"";
+            cost.Find("ArmE").Find("value").GetComponent<Text>().text = ArmorEquipment+"";
+            cost.Find("Manpower").Find("value").GetComponent<Text>().text = Manpower+"";
+            cost.Find("IC").Find("value").GetComponent<Text>().text = Ic+"";
+
+        }
+
+        public void InitDivision()
+        {
+            foreach (Transform o in gameObject.transform.parent.Find("BattalionList"))
+            {
+                o.GetComponent<Battalion.Battalion>().Die();
+                infantryEquipment -= o.GetComponent<Battalion.Battalion>().BattalionData.InfantryEquipment;
+                artilleryEquipment -= o.GetComponent<Battalion.Battalion>().BattalionData.ArtilleryEquipment;
+                armorEquipment -= o.GetComponent<Battalion.Battalion>().BattalionData.ArmorEquipment;
+                manpower -= o.GetComponent<Battalion.Battalion>().BattalionData.Manpower;
+                Ic -= Functions.Functions.CalculateIC(o.GetComponent<Battalion.Battalion>().BattalionData
+                    .BattalionType);
+            }
+            RefreshCost();
         }
     }
 }

@@ -9,16 +9,16 @@ public class MainController : MonoBehaviour
 
     public void SwitchDisplay()
     {
-        
-            foreach (var go in list1)
-            {
-                go.SetActive(!go.activeSelf);
-            }
-        
-            foreach (var go in list2)
-            {
-                go.SetActive(!go.activeSelf);
-            }
-            
+        foreach (var go in list1)
+        {
+            go.SetActive(!go.activeSelf);
+        }
+
+        foreach (var go in list2)
+        {
+            go.SetActive(!go.activeSelf);
+        }
     }
+    
+    
 }
