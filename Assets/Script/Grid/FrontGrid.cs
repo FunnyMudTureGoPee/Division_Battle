@@ -1,8 +1,16 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Script.Grid
 {
+    public enum Ownership
+    {
+        Friend,
+        Enemy,
+        Null
+    }
+
     public class FrontGrid : MonoBehaviour
     {
         public GameObject hexPrefab;
@@ -11,11 +19,13 @@ namespace Script.Grid
         private float pfwidth;
         private float pfheight;
         private GameObject[,] hexes;
+        private Ownership[,] hexesOwnerships;
         private GameObject selectedHex = null;
 
         void Start()
         {
             hexes = new GameObject[width, height];
+            hexesOwnerships = new Ownership[width, height];
             pfwidth = hexPrefab.GetComponent<RectTransform>().rect.width;
             pfheight = hexPrefab.GetComponent<RectTransform>().rect.height;
             CreateHexMap();
@@ -38,6 +48,7 @@ namespace Script.Grid
                     hex_go.name = "Hex_" + x + "_" + y;
                     hex_go.GetComponentInChildren<TextMesh>().text = string.Format("{0},{1}", x, y);
                     hexes[x, y] = hex_go;
+                    hexesOwnerships[x, y] = Ownership.Null;
                 }
             }
         }
@@ -52,8 +63,12 @@ namespace Script.Grid
                 if (hit.collider != null)
                 {
                     Transform objectHit = hit.transform;
-                    TextMesh textMesh = objectHit.GetComponentInChildren<TextMesh>();
-                    if (textMesh != null)
+                    Image image = hit.transform.Find("image").GetComponent<Image>();
+
+                    HexCoordinates coordinates = GetHexCoordinates(objectHit.position);
+                    hexesOwnerships[coordinates.X, coordinates.Y] = Ownership.Friend;
+
+                    if (image != null)
                     {
                         if (selectedHex != null)
                         {
@@ -61,34 +76,67 @@ namespace Script.Grid
                             ResetHexColors();
                         }
 
+
                         selectedHex = objectHit.gameObject;
-                        textMesh.color = Color.red;
+                        image.color = Color.red;
                         ChangeAdjacentHexesColor(objectHit.position, Color.yellow);
                     }
                 }
             }
+            if (Input.GetMouseButtonDown(2))
+            {
+                Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+
+                if (hit.collider != null)
+                {
+                    Transform objectHit = hit.transform;
+                    Image image = hit.transform.Find("image").GetComponent<Image>();
+
+                    HexCoordinates coordinates = GetHexCoordinates(objectHit.position);
+                    hexesOwnerships[coordinates.X, coordinates.Y] = Ownership.Enemy;
+
+                    if (image != null)
+                    {
+                        if (selectedHex != null)
+                        {
+                            // Reset the previous selection
+                            ResetHexColors();
+                        }
+
+
+                        selectedHex = objectHit.gameObject;
+                        image.color = Color.red;
+                        ChangeAdjacentHexesColor(objectHit.position, Color.yellow);
+                    }
+                }
+            }
+
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                ResetHexColors();
+            }
         }
+
 
         void ChangeAdjacentHexesColor(Vector2 position, Color color)
         {
             HexCoordinates coords = GetHexCoordinates(position);
-            Debug.Log("Changing colors for Hex at: " + coords.X + "," + coords.Y);
-
             List<HexCoordinates> adjacentCoords = GetAdjacentHexes(coords);
             foreach (var adjacentCoord in adjacentCoords)
             {
                 if (adjacentCoord.X >= 0 && adjacentCoord.X < width && adjacentCoord.Y >= 0 && adjacentCoord.Y < height)
                 {
                     GameObject adjacentHex = hexes[adjacentCoord.X, adjacentCoord.Y];
-                    TextMesh adjacentTextMesh = adjacentHex.GetComponentInChildren<TextMesh>();
-                    if (adjacentTextMesh != null)
+                    Image adjacentImage = adjacentHex.GetComponentInChildren<Image>();
+                    if (adjacentImage != null)
                     {
-                        Debug.Log("Changing color of Hex at: " + adjacentCoord.X + "," + adjacentCoord.Y);
-                        hexes[adjacentCoord.X, adjacentCoord.Y].GetComponentInChildren<TextMesh>().color = color;
+                        hexes[adjacentCoord.X, adjacentCoord.Y].GetComponentInChildren<Image>().color = color;
                     }
                 }
             }
         }
+
 
         List<HexCoordinates> GetAdjacentHexes(HexCoordinates coords)
         {
@@ -105,15 +153,27 @@ namespace Script.Grid
             return adjacentHexes;
         }
 
-
+   
         void ResetHexColors()
         {
-            foreach (GameObject hex in hexes)
+            for (var x = 0; x < hexes.GetLength(0); x++)
+            for (var y = 0; y < hexes.GetLength(1); y++)
             {
-                TextMesh textMesh = hex.GetComponentInChildren<TextMesh>();
-                if (textMesh != null)
+                var hex = hexes[x, y];
+                Image image = hex.GetComponentInChildren<Image>();
+
+
+                switch (hexesOwnerships[x, y])
                 {
-                    textMesh.color = Color.white;
+                    case Ownership.Enemy:
+                        image.color = Color.red;
+                        break;
+                    case Ownership.Friend:
+                        image.color = Color.green;
+                        break;
+                    case Ownership.Null:
+                        image.color = Color.white;
+                        break;
                 }
             }
         }
@@ -128,6 +188,11 @@ namespace Script.Grid
             int x = Mathf.RoundToInt((gridPos.x / pfwidth - (y % 2 == 1 ? 0.38f : 0)) / 0.76f);
 
             return new HexCoordinates(x, y);
+        }
+
+        public Vector3 GetWorldPostion(int x, int y)
+        {
+            return hexes[x, y].transform.position;
         }
     }
 
