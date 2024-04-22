@@ -45,6 +45,7 @@ namespace Script
 
         public void Initialize(List<Action> actions)
         {
+            
             Vector2 panelSize = new Vector2(200, actions.Count * (buttonSize.y + buttonSpacing) + 10);
             buttonList =
                 ButtonPanelFactory.CreateButtonPanel(buttonList, buttonSize, buttonSpacing, actions, buttonPrefab);
@@ -64,11 +65,13 @@ namespace Script
                     Debug.Log("第1个按钮被点击");
                     Destroy(gameObject);
                 },
-                () => {
+                () =>
+                {
                     Debug.Log("第2个按钮被点击");
                     Destroy(gameObject);
                 },
-                () => {
+                () =>
+                {
                     Debug.Log("第2个按钮被点击");
                     Destroy(gameObject);
                 },

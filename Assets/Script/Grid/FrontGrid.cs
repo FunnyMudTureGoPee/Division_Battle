@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,6 +22,10 @@ namespace Script.Grid
         private GameObject[,] hexes;
         private Ownership[,] hexesOwnerships;
         private GameObject selectedHex = null;
+        private HexCoordinates selectedHexCoordinates;
+        private List<HexCoordinates> aimHexes = new List<HexCoordinates>();
+        private HexCoordinates aimHexCoordinates;
+        private bool IsEnableAimHex;
 
         void Start()
         {
@@ -55,12 +60,50 @@ namespace Script.Grid
 
         void Update()
         {
+            if (IsEnableAimHex)
+            {
+                if (Input.GetMouseButtonDown(2))
+                {
+                    Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+
+                    if (hit.collider is not null)
+                    {
+                        Transform objectHit = hit.transform;
+                        HexCoordinates coordinates = GetHexCoordinates(objectHit.position);
+                        foreach (var hex in aimHexes)
+                        {
+                            if (hex.IsEqual(coordinates))
+                            {
+                                aimHexCoordinates = coordinates;
+                            }
+                        }
+                    }
+
+                    Move();
+                }
+                return;
+            }
+
+
             if (Input.GetMouseButtonDown(0))
             {
                 Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
-                if (hit.collider != null)
+                if (hit.collider is not null)
+                {
+                    Transform objectHit = hit.transform;
+                    SelectHex(GetHexCoordinates(objectHit.position));
+                }
+            }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+
+                if (hit.collider is not null)
                 {
                     Transform objectHit = hit.transform;
                     Image image = hit.transform.Find("image").GetComponent<Image>();
@@ -68,9 +111,9 @@ namespace Script.Grid
                     HexCoordinates coordinates = GetHexCoordinates(objectHit.position);
                     hexesOwnerships[coordinates.X, coordinates.Y] = Ownership.Friend;
 
-                    if (image != null)
+                    if (image is not null)
                     {
-                        if (selectedHex != null)
+                        if (selectedHex is not null)
                         {
                             // Reset the previous selection
                             ResetHexColors();
@@ -78,39 +121,38 @@ namespace Script.Grid
 
 
                         selectedHex = objectHit.gameObject;
-                        image.color = Color.red;
-                        ChangeAdjacentHexesColor(objectHit.position, Color.yellow);
+                        image.color = Color.green;
+                        ChangeAdjacentHexesColor(GetMovAbleHexes(coordinates), Color.yellow);
                     }
                 }
             }
-            if (Input.GetMouseButtonDown(2))
-            {
-                Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
-                if (hit.collider != null)
-                {
-                    Transform objectHit = hit.transform;
-                    Image image = hit.transform.Find("image").GetComponent<Image>();
-
-                    HexCoordinates coordinates = GetHexCoordinates(objectHit.position);
-                    hexesOwnerships[coordinates.X, coordinates.Y] = Ownership.Enemy;
-
-                    if (image != null)
-                    {
-                        if (selectedHex != null)
-                        {
-                            // Reset the previous selection
-                            ResetHexColors();
-                        }
-
-
-                        selectedHex = objectHit.gameObject;
-                        image.color = Color.red;
-                        ChangeAdjacentHexesColor(objectHit.position, Color.yellow);
-                    }
-                }
-            }
+            // if (Input.GetMouseButtonDown(2))
+            // {
+            //     Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            //     RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+            //
+            //     if (hit.collider is not null)
+            //     {
+            //         Transform objectHit = hit.transform;
+            //         Image image = hit.transform.Find("image").GetComponent<Image>();
+            //
+            //         HexCoordinates coordinates = GetHexCoordinates(objectHit.position);
+            //
+            //         if (image is not null)
+            //         {
+            //             if (selectedHex is not null)
+            //             {
+            //                 // Reset the previous selection
+            //                 ResetHexColors();
+            //             }
+            //
+            //             selectedHex = objectHit.gameObject;
+            //             image.color = Color.cyan;
+            //             ChangeAdjacentHexesColor(GetMovAbleHexes(coordinates), Color.blue);
+            //         }
+            //     }
+            // }
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
@@ -118,18 +160,55 @@ namespace Script.Grid
             }
         }
 
-
-        void ChangeAdjacentHexesColor(Vector2 position, Color color)
+        private void EnableAimHex()
         {
-            HexCoordinates coords = GetHexCoordinates(position);
-            List<HexCoordinates> adjacentCoords = GetAdjacentHexes(coords);
+            Debug.Log("EnableAimHex");
+            IsEnableAimHex = true;
+            aimHexes = GetMovAbleHexes(selectedHexCoordinates);
+            ChangeAdjacentHexesColor(aimHexes, Color.blue);
+        }
+
+        public void Move()
+        {
+            hexesOwnerships[aimHexCoordinates.X, aimHexCoordinates.Y] = Ownership.Friend;
+            hexesOwnerships[selectedHexCoordinates.X, selectedHexCoordinates.Y] = Ownership.Null;
+            IsEnableAimHex = false;
+            selectedHexCoordinates = new HexCoordinates();
+            aimHexes.Clear();
+            ResetHexColors();
+        }
+
+
+        private void SelectHex(HexCoordinates coordinates)
+        {
+            switch (hexesOwnerships[coordinates.X, coordinates.Y])
+            {
+                case Ownership.Friend:
+                    GameObject buttonPanel = Instantiate(Resources.Load<GameObject>("ButtonPanel"),
+                        Functions.Functions.GetMouseWorldPosition() - new Vector3(0, 0, 5), Quaternion.identity);
+                    selectedHexCoordinates = coordinates;
+                    buttonPanel.GetComponent<ButtonPanel>().Initialize(new List<Action>()
+                    {
+                        () =>
+                        {
+                            EnableAimHex();
+                            Destroy(buttonPanel);
+                        }
+                    });
+                    break;
+            }
+        }
+
+
+        void ChangeAdjacentHexesColor(List<HexCoordinates> adjacentCoords, Color color)
+        {
             foreach (var adjacentCoord in adjacentCoords)
             {
                 if (adjacentCoord.X >= 0 && adjacentCoord.X < width && adjacentCoord.Y >= 0 && adjacentCoord.Y < height)
                 {
                     GameObject adjacentHex = hexes[adjacentCoord.X, adjacentCoord.Y];
                     Image adjacentImage = adjacentHex.GetComponentInChildren<Image>();
-                    if (adjacentImage != null)
+                    if (adjacentImage is not null)
                     {
                         hexes[adjacentCoord.X, adjacentCoord.Y].GetComponentInChildren<Image>().color = color;
                     }
@@ -153,7 +232,64 @@ namespace Script.Grid
             return adjacentHexes;
         }
 
-   
+        /// <summary>
+        /// 获取可移动的单元格
+        /// </summary>
+        /// <param name="coords">中心单元格</param>
+        /// <returns></returns>
+        public List<HexCoordinates> GetMovAbleHexes(HexCoordinates coords)
+        {
+            List<HexCoordinates> adjacentHexes = new List<HexCoordinates>();
+            int xOffset = coords.Y % 2 == 0 ? -1 : 1;
+
+            // Define the six possible directions for adjacent hexes
+            (int x, int y)[] directions =
+            {
+                (-1, 0), // Left
+                (1, 0), // Right
+                (0, -1), // Bottom
+                (0, 1), // Top
+                (xOffset, 1), // Top-right or Top-left based on parity
+                (xOffset, -1) // Bottom-right or Bottom-left based on parity
+            };
+
+            // Calculate and add the adjacent hex coordinates if they meet the condition
+            foreach (var (dx, dy) in directions)
+            {
+                HexCoordinates newCoords = new HexCoordinates(coords.X + dx, coords.Y + dy);
+                // Check bounds and ownership before adding
+                if (IsWithinBounds(newCoords, hexesOwnerships.GetLength(0), hexesOwnerships.GetLength(1)))
+                {
+                    switch (hexesOwnerships[newCoords.X, newCoords.Y])
+                    {
+                        case Ownership.Enemy:
+                            break;
+                        case Ownership.Friend:
+
+                            break;
+                        case Ownership.Null:
+                            adjacentHexes.Add(newCoords);
+                            break;
+                    }
+                }
+            }
+
+            return adjacentHexes;
+        }
+
+        private bool IsWithinBounds(HexCoordinates coords, int width, int height)
+        {
+            return coords.X >= 0 && coords.X < width && coords.Y >= 0 && coords.Y < height;
+        }
+
+        public enum Ownership
+        {
+            Enemy,
+            Friend,
+            Null
+        }
+
+
         void ResetHexColors()
         {
             for (var x = 0; x < hexes.GetLength(0); x++)
@@ -205,6 +341,11 @@ namespace Script.Grid
         {
             X = x;
             Y = y;
+        }
+
+        public bool IsEqual(HexCoordinates hexCoordinates)
+        {
+            return X == hexCoordinates.X && Y == hexCoordinates.Y;
         }
     }
 }
