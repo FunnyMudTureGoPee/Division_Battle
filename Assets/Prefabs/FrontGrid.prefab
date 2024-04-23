@@ -35,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 60, y: 60}
+  m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4420648612254611555
 CanvasRenderer:
@@ -89,7 +89,7 @@ GameObject:
   - component: {fileID: 6342948124797394237}
   - component: {fileID: 2567325240457655408}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: FrontGrid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -114,7 +114,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 60, y: 60}
+  m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8324627262702547008
 CanvasRenderer:
@@ -210,12 +210,12 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: -0.008483887, y: 26.119518}
-      - {x: -22.721756, y: 13.036176}
-      - {x: -22.615665, y: -13.024191}
-      - {x: -0.0028686523, y: -25.979858}
-      - {x: 22.588938, y: -12.958025}
-      - {x: 22.564589, y: 13.003038}
+    - - {x: -0.008483887, y: 35.943737}
+      - {x: -31.171402, y: 18.089764}
+      - {x: -31.244267, y: -18.010092}
+      - {x: -0.0030517578, y: -36.10034}
+      - {x: 31.235178, y: -18.01784}
+      - {x: 31.089247, y: 17.877733}
   m_UseDelaunayMesh: 0
 --- !u!102 &2567325240457655408
 TextMesh:
@@ -274,7 +274,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -16, y: -34}
+  m_SizeDelta: {x: -30, y: -50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3392224899131900875
 CanvasRenderer:

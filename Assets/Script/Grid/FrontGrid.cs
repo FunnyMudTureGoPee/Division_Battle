@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Script.Battalion;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,14 +27,25 @@ namespace Script.Grid
         private List<HexCoordinates> aimHexes = new List<HexCoordinates>();
         private HexCoordinates aimHexCoordinates;
         private bool IsEnableAimHex;
+        private GridData[,] GridDatas;
+        private GridData selectedGridData;
+        private bool isReadyArrange;
+
+        public GridData SelectedGridData
+        {
+            get => selectedGridData;
+            set => selectedGridData = value;
+        }
 
         void Start()
         {
             hexes = new GameObject[width, height];
             hexesOwnerships = new Ownership[width, height];
+            GridDatas = new GridData[width, height];
             pfwidth = hexPrefab.GetComponent<RectTransform>().rect.width;
             pfheight = hexPrefab.GetComponent<RectTransform>().rect.height;
             CreateHexMap();
+            ResetHex();
         }
 
         void CreateHexMap()
@@ -76,13 +88,14 @@ namespace Script.Grid
                             if (hex.IsEqual(coordinates))
                             {
                                 aimHexCoordinates = coordinates;
+                                Move();
+                                return;
                             }
                         }
-                    }
 
-                    Move();
+                        Functions.Functions.CreateTip("超出移动范围", Functions.Functions.GetMouseWorldPosition(), 2f);
+                    }
                 }
-                return;
             }
 
 
@@ -109,14 +122,14 @@ namespace Script.Grid
                     Image image = hit.transform.Find("image").GetComponent<Image>();
 
                     HexCoordinates coordinates = GetHexCoordinates(objectHit.position);
-                    hexesOwnerships[coordinates.X, coordinates.Y] = Ownership.Friend;
+                    Arrange(coordinates);
 
                     if (image is not null)
                     {
                         if (selectedHex is not null)
                         {
                             // Reset the previous selection
-                            ResetHexColors();
+                            ResetHex();
                         }
 
 
@@ -144,7 +157,7 @@ namespace Script.Grid
             //             if (selectedHex is not null)
             //             {
             //                 // Reset the previous selection
-            //                 ResetHexColors();
+            //                 ResetHex();
             //             }
             //
             //             selectedHex = objectHit.gameObject;
@@ -156,13 +169,12 @@ namespace Script.Grid
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                ResetHexColors();
+                ResetHex();
             }
         }
 
         private void EnableAimHex()
         {
-            Debug.Log("EnableAimHex");
             IsEnableAimHex = true;
             aimHexes = GetMovAbleHexes(selectedHexCoordinates);
             ChangeAdjacentHexesColor(aimHexes, Color.blue);
@@ -172,10 +184,28 @@ namespace Script.Grid
         {
             hexesOwnerships[aimHexCoordinates.X, aimHexCoordinates.Y] = Ownership.Friend;
             hexesOwnerships[selectedHexCoordinates.X, selectedHexCoordinates.Y] = Ownership.Null;
+            GridDatas[aimHexCoordinates.X, aimHexCoordinates.Y] =
+                GridDatas[selectedHexCoordinates.X, selectedHexCoordinates.Y];
+            GridDatas[selectedHexCoordinates.X, selectedHexCoordinates.Y] = null;
             IsEnableAimHex = false;
             selectedHexCoordinates = new HexCoordinates();
             aimHexes.Clear();
-            ResetHexColors();
+            ResetHex();
+        }
+
+        //todo 增加资源扣除机制
+        public void Arrange(HexCoordinates coordinates)
+        {
+            if (selectedGridData is null)
+            {
+                Debug.Log("空");
+                return;
+            }
+
+            GridDatas[coordinates.X, coordinates.Y] = selectedGridData;
+            hexesOwnerships[coordinates.X, coordinates.Y] = Ownership.Friend;
+            ResetHex();
+            //资源扣除
         }
 
 
@@ -184,16 +214,17 @@ namespace Script.Grid
             switch (hexesOwnerships[coordinates.X, coordinates.Y])
             {
                 case Ownership.Friend:
+
                     GameObject buttonPanel = Instantiate(Resources.Load<GameObject>("ButtonPanel"),
-                        Functions.Functions.GetMouseWorldPosition() - new Vector3(0, 0, 5), Quaternion.identity);
+                        Functions.Functions.GetMouseWorldPosition() - new Vector3(-pfwidth, 0, 5), Quaternion.identity);
                     selectedHexCoordinates = coordinates;
-                    buttonPanel.GetComponent<ButtonPanel>().Initialize(new List<Action>()
+                    buttonPanel.GetComponent<ButtonPanel>().Initialize(new List<(string name, Action action)>()
                     {
-                        () =>
+                        ("移动", () =>
                         {
                             EnableAimHex();
                             Destroy(buttonPanel);
-                        }
+                        })
                     });
                     break;
             }
@@ -282,37 +313,64 @@ namespace Script.Grid
             return coords.X >= 0 && coords.X < width && coords.Y >= 0 && coords.Y < height;
         }
 
-        public enum Ownership
-        {
-            Enemy,
-            Friend,
-            Null
-        }
 
-
-        void ResetHexColors()
+        void ResetHex()
         {
             for (var x = 0; x < hexes.GetLength(0); x++)
-            for (var y = 0; y < hexes.GetLength(1); y++)
             {
-                var hex = hexes[x, y];
-                Image image = hex.GetComponentInChildren<Image>();
-
-
-                switch (hexesOwnerships[x, y])
+                for (var y = 0; y < hexes.GetLength(1); y++)
                 {
-                    case Ownership.Enemy:
-                        image.color = Color.red;
-                        break;
-                    case Ownership.Friend:
-                        image.color = Color.green;
-                        break;
-                    case Ownership.Null:
-                        image.color = Color.white;
-                        break;
+                    SetHexColorAndIcon(x, y);
                 }
             }
         }
+
+        void SetHexColorAndIcon(int x, int y)
+        {
+            var hex = hexes[x, y];
+            Image image = hex.GetComponentInChildren<Image>();
+            Image icon = hex.transform.Find("icon").GetComponent<Image>();
+
+            // 设置颜色和图标可见性
+            var ownership = hexesOwnerships[x, y];
+            image.color = GetColorByOwnership(ownership);
+            icon.enabled = (ownership != Ownership.Null);
+
+            // 如果不是 Null 所有权，设置相应的图标
+            if (ownership != Ownership.Null)
+            {
+                icon.sprite = GetIconByBattalionType(GridDatas[x, y].Type);
+            }
+        }
+
+        Color GetColorByOwnership(Ownership ownership)
+        {
+            switch (ownership)
+            {
+                case Ownership.Enemy: return Color.red;
+                case Ownership.Friend: return Color.green;
+                default: return Color.white;
+            }
+        }
+
+        Sprite GetIconByBattalionType(BattalionData.BattalionTypes type)
+        {
+            var iconPathDictionary = new Dictionary<BattalionData.BattalionTypes, string>
+            {
+                { BattalionData.BattalionTypes.Infantry, "Icon/Inf" },
+                { BattalionData.BattalionTypes.Artillery, "Icon/Art" },
+                { BattalionData.BattalionTypes.Armor, "Icon/Arm" }
+            };
+
+            if (iconPathDictionary.TryGetValue(type, out var path))
+            {
+                return Resources.Load<Sprite>(path);
+            }
+
+            return null; // 或者返回一个默认的图标
+        }
+
+
 
         HexCoordinates GetHexCoordinates(Vector2 worldPos)
         {

@@ -24,8 +24,6 @@ namespace Script
 
         public void Refresh()
         {
-            
-            
             ExploreDirectory(folderPath);
 
             CreatItem();
@@ -44,43 +42,17 @@ namespace Script
                 GameObject item = Instantiate(pfDivisionItem, context);
                 item.transform.position += offset;
                 offset += new Vector3(0, -item.GetComponent<RectTransform>().rect.height - this.offset, 0);
-                switch (gridData.Type)
-                {
-                    case BattalionData.BattalionTypes.Infantry:
-                        item.transform.Find("Icon").GetComponent<Image>().sprite = Resources.Load<Sprite>("Icon/Inf");
-                        break;
-                    case BattalionData.BattalionTypes.Artillery:
-                        item.transform.Find("Icon").GetComponent<Image>().sprite = Resources.Load<Sprite>("Icon/Art");
-                        break;
-                    case BattalionData.BattalionTypes.Armor:
-                        item.transform.Find("Icon").GetComponent<Image>().sprite = Resources.Load<Sprite>("Icon/Arm");
-                        break;
-                }
-
-                item.transform.Find("Name").GetComponent<Text>().text = gridData.name;
-                GridData gd = gridData;
-                item.transform.Find("Buttons").Find("Edit").GetComponent<Button>().onClick.AddListener(delegate
-                {
-                    LoadDivision(gd);
-                });
-                string s = gridData.name;
-                item.transform.Find("Buttons").Find("Delete").GetComponent<Button>().onClick.AddListener(delegate
-                {
-                    DeleteDivision(s, item);
-                });
-
-                item.transform.Find("Cost").Find("manpower").Find("value").GetComponent<Text>().text =
-                    gridData.Manpower+"";
-                item.transform.Find("Cost").Find("ic").Find("value").GetComponent<Text>().text =
-                    gridData.IC+"";
+                item.GetComponent<Division>().GridData = gridData;
+                item.GetComponent<Division>().LoadData();
             }
         }
 
-        private void LoadDivision(GridData gridData)
+        public void LoadDivision(GridData gridData)
         {
             friendPanel.transform.Find("DivisionManger").GetComponent<DivisionManger>().LoadDivision(gridData);
         }
-        private void DeleteDivision(string name, GameObject itself)
+
+        public void DeleteDivision(string name, GameObject itself)
         {
             string filePath = folderPath + "/" + name;
             // 检查文件是否存在
@@ -110,8 +82,8 @@ namespace Script
                 // 遍历所有文件
                 foreach (FileInfo file in files)
                 {
-                    if (file.Name.EndsWith(".meta"))continue;
-                    
+                    if (file.Name.EndsWith(".meta")) continue;
+
                     GridDatas.Add(Functions.Functions.LoadByJson("user/" + file.Name));
                 }
             }
