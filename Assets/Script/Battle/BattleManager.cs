@@ -336,6 +336,7 @@ namespace Script
             ec.factories[0].Inventory.Value += inf;
             ec.factories[1].Inventory.Value += art;
             ec.factories[2].Inventory.Value += arm;
+            ec.RefreshInventory();
 
             
             message += "步枪装备：" + inf + "\n";

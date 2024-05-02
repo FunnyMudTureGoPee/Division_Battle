@@ -13,9 +13,7 @@ namespace Script
 
         public void Save()
         {
-            GridData gridData = new GridData("test", 0, GridManger1.GetComponent<DivisionManger>().Grid.Battalions);
-            Functions.Functions.SaveByJson("test", gridData);
-            GridManger2.GetComponent<DivisionManger>().Grid.Battalions = GridManger1.GetComponent<DivisionManger>().Grid.Battalions;
+            GridManger1.GetComponent<DivisionManger>().SaveDivision("");
         }
 
         public void Refresh()
@@ -60,7 +58,7 @@ namespace Script
 
         public void Load()
         {
-            GridData gridData = Functions.Functions.LoadByJson("test");
+            GridData gridData = Functions.Functions.LoadByJson("填线宝宝");
             foreach (var varBattalionData in gridData.battalionDatas)
             {
                 GridManger2.GetComponent<DivisionManger>().CreatBattalion(varBattalionData.x, varBattalionData.y,

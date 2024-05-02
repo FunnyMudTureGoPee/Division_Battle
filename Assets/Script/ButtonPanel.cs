@@ -87,6 +87,18 @@ namespace Script
                                                                     transform.Find("Title")
                                                                         .GetComponent<RectTransform>().rect.height);
         }
+        public void Initialize(string title, List<(string name, Action action)> actions)
+        {
+            Vector2 panelSize = new Vector2(buttonSize.x + 10 * 2, actions.Count * (buttonSize.y + buttonSpacing) + 10);
+            buttonList =
+                ButtonPanelFactory.CreateButtonPanel(buttonList, buttonSize, buttonSpacing, actions, buttonPrefab);
+
+            transform.GetComponent<RectTransform>().sizeDelta = panelSize +
+                                                                new Vector2(0,
+                                                                    transform.Find("Title")
+                                                                        .GetComponent<RectTransform>().rect.height);
+            this.title.text = title;
+        }
 
         public void Test()
         {

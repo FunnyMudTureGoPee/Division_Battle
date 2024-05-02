@@ -431,7 +431,7 @@ namespace Script.Grid
 
             // 获取一次组件引用并存储在局部变量中
             Battalion.Battalion battalion = gameObject.GetComponent<Battalion.Battalion>();
-            
+
             infantryEquipment += battalion.BattalionData.InfantryEquipment;
             artilleryEquipment += battalion.BattalionData.ArtilleryEquipment;
             armorEquipment += battalion.BattalionData.ArmorEquipment;
@@ -459,6 +459,7 @@ namespace Script.Grid
             {
                 gameObject.GetComponent<Battalion.Battalion>().BattalionXY = list;
             }
+
             RefreshCost();
         }
 
@@ -495,10 +496,25 @@ namespace Script.Grid
 
         public void SaveDivision()
         {
+            SaveDivision("user/");
+        }
+
+        /// <summary>
+        /// 保存
+        /// </summary>
+        /// <param name="path">SaveFiles下的子路径</param>
+        public void SaveDivision(string path)
+        {
             string dividsonName = aimPanel.transform.Find("Information").GetComponent<Information>().DivisionName;
-            int level = aimPanel.transform.Find("Information").GetComponent<Information>().ListLength;
+            int level = aimPanel.transform.Find("Information").GetComponent<Information>().ListLength switch
+            {
+                < 3 => 1,
+                >= 3 and < 7 => 2,
+                _ => 3
+            };
+
             GridData gridData = new GridData(dividsonName, level, Grid.Battalions);
-            Functions.Functions.SaveByJson("user/" + dividsonName, gridData);
+            Functions.Functions.SaveByJson(path + dividsonName, gridData);
         }
 
 
@@ -513,18 +529,19 @@ namespace Script.Grid
                 CreatBattalion(varBattalionData.x, varBattalionData.y,
                     varBattalionData.dirs, varBattalionData.types);
             }
+
             RefreshCost();
         }
+
 
         public void RefreshCost()
         {
             Transform cost = transform.Find("Cost");
-            cost.Find("InfE").Find("value").GetComponent<Text>().text = InfantryEquipment+"";
-            cost.Find("ArtE").Find("value").GetComponent<Text>().text = ArtilleryEquipment+"";
-            cost.Find("ArmE").Find("value").GetComponent<Text>().text = ArmorEquipment+"";
-            cost.Find("Manpower").Find("value").GetComponent<Text>().text = Manpower+"";
-            cost.Find("IC").Find("value").GetComponent<Text>().text = Ic+"";
-
+            cost.Find("InfE").Find("value").GetComponent<Text>().text = InfantryEquipment + "";
+            cost.Find("ArtE").Find("value").GetComponent<Text>().text = ArtilleryEquipment + "";
+            cost.Find("ArmE").Find("value").GetComponent<Text>().text = ArmorEquipment + "";
+            cost.Find("Manpower").Find("value").GetComponent<Text>().text = Manpower + "";
+            cost.Find("IC").Find("value").GetComponent<Text>().text = Ic + "";
         }
 
         public void InitDivision()
@@ -539,6 +556,7 @@ namespace Script.Grid
                 Ic -= Functions.Functions.CalculateIC(o.GetComponent<Battalion.Battalion>().BattalionData
                     .BattalionType);
             }
+
             RefreshCost();
         }
     }

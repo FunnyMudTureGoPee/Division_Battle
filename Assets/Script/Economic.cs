@@ -7,13 +7,26 @@ namespace Script
 {
     public class Inventory
     {
-        public int Value;
+        private int value;
         public Text _text;
+
+        public int Value
+        {
+            get => value;
+            set=> this.value = value;
+                
+            
+        }
 
         public Inventory(Transform transform)
         {
-            Value = 0;
+            value = 0;
             _text = transform.Find("value").GetComponent<Text>();
+        }
+
+        private void RefreshText()
+        {
+            _text.text = Value.ToString();
         }
     }
 
@@ -96,6 +109,7 @@ namespace Script
         public void NextTurn()
         {
             Inventory.Value += CalculateProduction();
+            RefreshText();
         }
 
         public void RefreshText()
@@ -115,7 +129,33 @@ namespace Script
 
         public Factory[] factories;
 
-        private void Start()
+
+        public int InfInventory
+        {
+            get => factories[0].Inventory.Value;
+            set => factories[0].Inventory.Value = value;
+        }
+
+        public int ArtInventory
+        {
+            get => factories[1].Inventory.Value;
+            set => factories[1].Inventory.Value = value;
+        }
+
+        public int ArmInventory
+        {
+            get => factories[2].Inventory.Value;
+            set => factories[2].Inventory.Value = value;
+        }
+
+        public int ManpowerInventory
+        {
+            get => factories[3].Inventory.Value;
+            set => factories[3].Inventory.Value = value;
+        }
+
+
+        private void Awake()
         {
             var thisTransform = transform;
             // 初始化工厂对象的数组
@@ -141,6 +181,7 @@ namespace Script
         {
             foreach (var factory in factories)
             {
+                Debug.Log("Debug:下一回合");
                 factory.NextTurn();
             }
         }
@@ -173,21 +214,34 @@ namespace Script
             factoryText.text = $"空闲{factoryNumber}个生产单元";
         }
 
+        public void RefreshInventory()
+        {
+            foreach (var varFactory in factories)
+            {
+                varFactory.RefreshText();
+            }
+        }
+
         public void SwitchDisplayStatus()
         {
             if (isDisplay)
             {
                 transform.DOMove(nonDisplayVector3, 0.5f);
                 isDisplay = !isDisplay;
-
             }
             else
             {
                 transform.DOMove(new Vector3(0, 0, 0), 0.5f);
                 isDisplay = !isDisplay;
             }
-            
-            
+        }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.N))
+            {
+                NextTurn();
+            }
         }
     }
 }

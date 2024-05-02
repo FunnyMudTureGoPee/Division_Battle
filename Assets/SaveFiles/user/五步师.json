@@ -1,1 +1,49 @@
-{"name":"五步师","level":5,"Type":0,"IC":250,"infantryEquipment":500,"artilleryEquipment":0,"armorEquipment":0,"Manpower":5000,"battalionDatas":[{"x":3,"y":9,"dirs":0,"types":0,"id":123},{"x":3,"y":12,"dirs":0,"types":0,"id":123},{"x":5,"y":11,"dirs":0,"types":0,"id":123},{"x":7,"y":9,"dirs":0,"types":0,"id":123},{"x":7,"y":12,"dirs":0,"types":0,"id":123}],"width":12,"high":18}
+{
+  "name": "五步师",
+  "level": 2,
+  "Type": 0,
+  "IC": 250,
+  "infantryEquipment": 500,
+  "artilleryEquipment": 0,
+  "armorEquipment": 0,
+  "Manpower": 5000,
+  "battalionDatas": [
+    {
+      "x": 1,
+      "y": 5,
+      "dirs": 0,
+      "types": 0,
+      "id": 123
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "dirs": 0,
+      "types": 0,
+      "id": 123
+    },
+    {
+      "x": 5,
+      "y": 5,
+      "dirs": 0,
+      "types": 0,
+      "id": 123
+    },
+    {
+      "x": 7,
+      "y": 5,
+      "dirs": 0,
+      "types": 0,
+      "id": 123
+    },
+    {
+      "x": 9,
+      "y": 5,
+      "dirs": 0,
+      "types": 0,
+      "id": 123
+    }
+  ],
+  "width": 12,
+  "high": 18
+}

@@ -20,20 +20,22 @@ namespace Script
 
         public void LoadData()
         {
-            switch (gridData.Type)
+            string path = gridData.Type switch
             {
-                case BattalionData.BattalionTypes.Infantry:
-                    transform.Find("Icon").GetComponent<Image>().sprite = Resources.Load<Sprite>("Icon/Inf");
-                    break;
-                case BattalionData.BattalionTypes.Artillery:
-                    transform.Find("Icon").GetComponent<Image>().sprite = Resources.Load<Sprite>("Icon/Art");
-                    break;
-                case BattalionData.BattalionTypes.Armor:
-                    transform.Find("Icon").GetComponent<Image>().sprite = Resources.Load<Sprite>("Icon/Arm");
-                    break;
-            }
+                BattalionData.BattalionTypes.Infantry => "Icon/Inf",
+                BattalionData.BattalionTypes.Artillery => ("Icon/Art"),
+                _ => ("Icon/Arm")
+            };
 
-            transform.Find("Name").GetComponent<Text>().text = gridData.name;
+            path += gridData.level switch
+            {
+                1 => "_1",
+                2 => "_2",
+                _ => "_3"
+            };
+            transform.Find("Icon").GetComponent<Image>().sprite = Resources.Load<Sprite>(path);
+
+                transform.Find("Name").GetComponent<Text>().text = gridData.name;
             transform.Find("Cost").Find("manpower").Find("value").GetComponent<Text>().text =
                 gridData.Manpower + "";
             transform.Find("Cost").Find("ic").Find("value").GetComponent<Text>().text =

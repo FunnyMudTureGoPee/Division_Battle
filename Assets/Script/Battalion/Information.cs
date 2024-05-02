@@ -111,7 +111,7 @@ namespace Script
 
         public void SaveName()
         {
-            divisionName = transform.Find("Name").Find("value").GetComponent<Text>().text;
+            divisionName = transform.Find("Name").GetComponent<InputField>().text;
             Debug.Log("Rename:"+divisionName);
         }
 

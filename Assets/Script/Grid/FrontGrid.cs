@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Script.Battalion;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 namespace Script.Grid
 {
@@ -15,6 +16,7 @@ namespace Script.Grid
 
     public class FrontGrid : MonoBehaviour
     {
+        public Economic Economic;
         public GameObject hexPrefab;
         public int width = 10;
         public int height = 10;
@@ -44,7 +46,9 @@ namespace Script.Grid
             GridDatas = new GridData[width, height];
             pfwidth = hexPrefab.GetComponent<RectTransform>().rect.width;
             pfheight = hexPrefab.GetComponent<RectTransform>().rect.height;
+            Economic = GameObject.Find("MainController").transform.Find("EconomicPanel").GetComponent<Economic>();
             CreateHexMap();
+            EnemyInit(Random.Range(99999, 999999));
             ResetHex();
         }
 
@@ -182,18 +186,27 @@ namespace Script.Grid
 
         public void Move()
         {
-            hexesOwnerships[aimHexCoordinates.X, aimHexCoordinates.Y] = Ownership.Friend;
-            hexesOwnerships[selectedHexCoordinates.X, selectedHexCoordinates.Y] = Ownership.Null;
-            GridDatas[aimHexCoordinates.X, aimHexCoordinates.Y] =
-                GridDatas[selectedHexCoordinates.X, selectedHexCoordinates.Y];
-            GridDatas[selectedHexCoordinates.X, selectedHexCoordinates.Y] = null;
+            Swap(aimHexCoordinates,selectedHexCoordinates);
             IsEnableAimHex = false;
             selectedHexCoordinates = new HexCoordinates();
             aimHexes.Clear();
             ResetHex();
         }
 
-        //todo 增加资源扣除机制
+        private void Swap(HexCoordinates hexCoordinate1, HexCoordinates hexCoordinate2)
+        {
+            (hexesOwnerships[hexCoordinate1.X, hexCoordinate1.Y], hexesOwnerships[hexCoordinate2.X, hexCoordinate2.Y]) =
+                (hexesOwnerships[hexCoordinate2.X, hexCoordinate2.Y],
+                    hexesOwnerships[hexCoordinate1.X, hexCoordinate1.Y]);
+            (GridDatas[hexCoordinate1.X, hexCoordinate1.Y], GridDatas[hexCoordinate2.X, hexCoordinate2.Y]) =
+                (GridDatas[hexCoordinate2.X, hexCoordinate2.Y],
+                    GridDatas[hexCoordinate1.X, hexCoordinate1.Y]);
+        }
+
+        /// <summary>
+        /// 部署友方单位
+        /// </summary>
+        /// <param name="coordinates"></param>
         public void Arrange(HexCoordinates coordinates)
         {
             if (selectedGridData is null)
@@ -202,13 +215,46 @@ namespace Script.Grid
                 return;
             }
 
+            if (Economic.InfInventory < selectedGridData.infantryEquipment ||
+                Economic.ArtInventory < selectedGridData.artilleryEquipment ||
+                Economic.ArmInventory < selectedGridData.armorEquipment ||
+                Economic.ManpowerInventory < selectedGridData.Manpower)
+            {
+                Debug.Log("资源不足");
+                return;
+            }
+
             GridDatas[coordinates.X, coordinates.Y] = selectedGridData;
             hexesOwnerships[coordinates.X, coordinates.Y] = Ownership.Friend;
             ResetHex();
             //资源扣除
+            Economic.InfInventory -= selectedGridData.infantryEquipment;
+            Economic.ArtInventory -= selectedGridData.artilleryEquipment;
+            Economic.ArmInventory -= selectedGridData.armorEquipment;
+            Economic.ManpowerInventory -= selectedGridData.Manpower;
+            Economic.RefreshInventory();
         }
 
+        /// <summary>
+        /// 撤回编制
+        /// </summary>
+        /// <param name="coordinates"></param>
+        private void Withdraw(HexCoordinates coordinates)
+        {
+            Economic.InfInventory += GridDatas[coordinates.X, coordinates.Y].infantryEquipment;
+            Economic.ArtInventory += GridDatas[coordinates.X, coordinates.Y].artilleryEquipment;
+            Economic.ArmInventory += GridDatas[coordinates.X, coordinates.Y].armorEquipment;
+            Economic.ManpowerInventory += GridDatas[coordinates.X, coordinates.Y].Manpower;
+            Economic.RefreshInventory();
+            GridDatas[coordinates.X, coordinates.Y] = null;
+            hexesOwnerships[coordinates.X, coordinates.Y] = Ownership.Null;
+            ResetHex();
+        }
 
+        /// <summary>
+        /// 选中单元格后出现命令菜单
+        /// </summary>
+        /// <param name="coordinates">单元格</param>
         private void SelectHex(HexCoordinates coordinates)
         {
             switch (hexesOwnerships[coordinates.X, coordinates.Y])
@@ -218,14 +264,21 @@ namespace Script.Grid
                     GameObject buttonPanel = Instantiate(Resources.Load<GameObject>("ButtonPanel"),
                         Functions.Functions.GetMouseWorldPosition() - new Vector3(-pfwidth, 0, 5), Quaternion.identity);
                     selectedHexCoordinates = coordinates;
-                    buttonPanel.GetComponent<ButtonPanel>().Initialize(new List<(string name, Action action)>()
-                    {
-                        ("移动", () =>
+                    buttonPanel.GetComponent<ButtonPanel>().Initialize(GridDatas[coordinates.X, coordinates.Y].name,
+                        new List<(string name, Action action)>()
                         {
-                            EnableAimHex();
-                            Destroy(buttonPanel);
-                        })
-                    });
+                            ("移动", () =>
+                            {
+                                EnableAimHex();
+                                Destroy(buttonPanel);
+                            }),
+                            ("撤编", () =>
+                            {
+                                Withdraw(coordinates);
+                                Destroy(buttonPanel);
+                            }),
+                            ("取消", () => { Destroy(buttonPanel); })
+                        });
                     break;
             }
         }
@@ -296,7 +349,7 @@ namespace Script.Grid
                         case Ownership.Enemy:
                             break;
                         case Ownership.Friend:
-
+                            adjacentHexes.Add(newCoords); 
                             break;
                         case Ownership.Null:
                             adjacentHexes.Add(newCoords);
@@ -339,7 +392,7 @@ namespace Script.Grid
             // 如果不是 Null 所有权，设置相应的图标
             if (ownership != Ownership.Null)
             {
-                icon.sprite = GetIconByBattalionType(GridDatas[x, y].Type);
+                icon.sprite = GetIconByBattalionType(GridDatas[x, y]);
             }
         }
 
@@ -353,7 +406,7 @@ namespace Script.Grid
             }
         }
 
-        Sprite GetIconByBattalionType(BattalionData.BattalionTypes type)
+        Sprite GetIconByBattalionType(GridData gridData)
         {
             var iconPathDictionary = new Dictionary<BattalionData.BattalionTypes, string>
             {
@@ -362,14 +415,19 @@ namespace Script.Grid
                 { BattalionData.BattalionTypes.Armor, "Icon/Arm" }
             };
 
-            if (iconPathDictionary.TryGetValue(type, out var path))
+            if (iconPathDictionary.TryGetValue(gridData.Type, out var path))
             {
+                path += gridData.level switch
+                {
+                    1 => "_1",
+                    2 => "_2",
+                    _ => "_3"
+                };
                 return Resources.Load<Sprite>(path);
             }
 
             return null; // 或者返回一个默认的图标
         }
-
 
 
         HexCoordinates GetHexCoordinates(Vector2 worldPos)
@@ -387,6 +445,38 @@ namespace Script.Grid
         public Vector3 GetWorldPostion(int x, int y)
         {
             return hexes[x, y].transform.position;
+        }
+
+        private void EnemyInit(int seed)
+        {
+            int y = 7 - seed % 4;
+            int x = 0;
+            while (x < width)
+            {
+                // 放置敌军
+                hexesOwnerships[x, y] = Ownership.Enemy;
+                GridDatas[x, y] = Functions.Functions.LoadByJson("填线宝宝");
+                int t = seed % 3;
+                if (t == 1)
+                {
+                    x += 1;
+                }
+                else
+                {
+                    if (y % 2 == 1) x += 1;
+                    switch (t)
+                    {
+                        case 0 when y < height - 1:
+                            y += 1;
+                            break;
+                        case 2 when y > 0:
+                            y -= 1;
+                            break;
+                    }
+                }
+
+                seed /= 7;
+            }
         }
     }
 

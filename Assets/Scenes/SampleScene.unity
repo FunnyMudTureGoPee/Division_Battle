@@ -1814,7 +1814,7 @@ MonoBehaviour:
   m_LineType: 0
   m_HideMobileInput: 0
   m_CharacterValidation: 4
-  m_CharacterLimit: 7
+  m_CharacterLimit: 5
   m_OnSubmit:
     m_PersistentCalls:
       m_Calls:
@@ -8140,7 +8140,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab756c484496e2f47beb93d739d312d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  factoryNumber: 15
+  factoryNumber: 5
   IC: 0
   manpower: 0
   isDisplay: 0
@@ -8757,6 +8757,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88d7bc8a404448fdace06dfd59976d06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Economic: {fileID: 0}
   hexPrefab: {fileID: 6828490107859340519, guid: ec044792e206fff4eb6ad0b7bcf01475, type: 3}
   width: 10
   height: 10
@@ -9764,7 +9765,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1802300946
 Transform:
   m_ObjectHideFlags: 0
