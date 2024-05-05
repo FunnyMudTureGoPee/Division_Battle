@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Script.Battalion;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +15,13 @@ namespace Script.Grid
         Null
     }
 
+    public enum State
+    {
+        Move,
+        Attack,
+        Default
+    }
+
     public class FrontGrid : MonoBehaviour
     {
         public Economic Economic;
@@ -23,13 +31,16 @@ namespace Script.Grid
         private float pfwidth;
         private float pfheight;
         private GameObject[,] hexes;
-        private Ownership[,] hexesOwnerships;
+
         private GameObject selectedHex = null;
         private HexCoordinates selectedHexCoordinates;
         private List<HexCoordinates> aimHexes = new List<HexCoordinates>();
         private HexCoordinates aimHexCoordinates;
         private bool IsEnableAimHex;
-        private GridData[,] GridDatas;
+        private State state = State.Default;
+
+        private DivisionObject[,] Divisions;
+
         private GridData selectedGridData;
         private bool isReadyArrange;
 
@@ -42,8 +53,10 @@ namespace Script.Grid
         void Start()
         {
             hexes = new GameObject[width, height];
-            hexesOwnerships = new Ownership[width, height];
-            GridDatas = new GridData[width, height];
+            // hexesOwnerships = new Ownership[width, height];
+            Divisions = new DivisionObject[width, height];
+
+            //GridDatas = new GridData[width, height];
             pfwidth = hexPrefab.GetComponent<RectTransform>().rect.width;
             pfheight = hexPrefab.GetComponent<RectTransform>().rect.height;
             Economic = GameObject.Find("MainController").transform.Find("EconomicPanel").GetComponent<Economic>();
@@ -69,14 +82,15 @@ namespace Script.Grid
                     hex_go.name = "Hex_" + x + "_" + y;
                     hex_go.GetComponentInChildren<TextMesh>().text = string.Format("{0},{1}", x, y);
                     hexes[x, y] = hex_go;
-                    hexesOwnerships[x, y] = Ownership.Null;
+                    Divisions[x, y] = new DivisionObject(Ownership.Null);
                 }
             }
         }
 
         void Update()
         {
-            if (IsEnableAimHex)
+            // 进攻或移动
+            if (IsEnableAimHex) //选择目标单元格
             {
                 if (Input.GetMouseButtonDown(2))
                 {
@@ -87,18 +101,34 @@ namespace Script.Grid
                     {
                         Transform objectHit = hit.transform;
                         HexCoordinates coordinates = GetHexCoordinates(objectHit.position);
-                        foreach (var hex in aimHexes)
+                        if (aimHexes.Any(hex => hex.IsEqual(coordinates)))
                         {
-                            if (hex.IsEqual(coordinates))
+                            aimHexCoordinates = coordinates;
+                            switch (state)
                             {
-                                aimHexCoordinates = coordinates;
-                                Move();
-                                return;
+                                case State.Move:
+                                    Move();
+                                    break;
+                                case State.Attack:
+                                    AutoFight();
+                                    break;
+                                default: break;
                             }
+
+                            return;
                         }
 
                         Functions.Functions.CreateTip("超出移动范围", Functions.Functions.GetMouseWorldPosition(), 2f);
                     }
+                }
+
+                if (Input.GetKeyDown(KeyCode.Z))
+                {
+                    Functions.Functions.CreateTip("取消命令", Functions.Functions.GetMouseWorldPosition(), 2f);
+                    IsEnableAimHex = false;
+                    selectedHexCoordinates = new HexCoordinates();
+                    aimHexes.Clear();
+                    ResetHex();
                 }
             }
 
@@ -139,7 +169,6 @@ namespace Script.Grid
 
                         selectedHex = objectHit.gameObject;
                         image.color = Color.green;
-                        ChangeAdjacentHexesColor(GetMovAbleHexes(coordinates), Color.yellow);
                     }
                 }
             }
@@ -177,30 +206,35 @@ namespace Script.Grid
             }
         }
 
-        private void EnableAimHex()
+        private void MoveAbleAimHex()
         {
+            aimHexes = GetMovAbleHexes(selectedHexCoordinates,
+                Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y].hexesOwnership);
+            if(aimHexes is null) return;
             IsEnableAimHex = true;
-            aimHexes = GetMovAbleHexes(selectedHexCoordinates);
             ChangeAdjacentHexesColor(aimHexes, Color.blue);
         }
 
         public void Move()
         {
-            Swap(aimHexCoordinates,selectedHexCoordinates);
+            Swap(aimHexCoordinates, selectedHexCoordinates);
+            
             IsEnableAimHex = false;
             selectedHexCoordinates = new HexCoordinates();
             aimHexes.Clear();
             ResetHex();
+            state = State.Default;
         }
 
         private void Swap(HexCoordinates hexCoordinate1, HexCoordinates hexCoordinate2)
         {
-            (hexesOwnerships[hexCoordinate1.X, hexCoordinate1.Y], hexesOwnerships[hexCoordinate2.X, hexCoordinate2.Y]) =
-                (hexesOwnerships[hexCoordinate2.X, hexCoordinate2.Y],
-                    hexesOwnerships[hexCoordinate1.X, hexCoordinate1.Y]);
-            (GridDatas[hexCoordinate1.X, hexCoordinate1.Y], GridDatas[hexCoordinate2.X, hexCoordinate2.Y]) =
-                (GridDatas[hexCoordinate2.X, hexCoordinate2.Y],
-                    GridDatas[hexCoordinate1.X, hexCoordinate1.Y]);
+            Divisions[hexCoordinate1.X, hexCoordinate1.Y].movepoint -= 1;
+            Divisions[hexCoordinate2.X, hexCoordinate2.Y].movepoint -= 1;
+            Debug.Log(
+                hexCoordinate1.X + "," + hexCoordinate1.Y + "与" + hexCoordinate2.X + "," + hexCoordinate2.Y + "交换");
+            (Divisions[hexCoordinate1.X, hexCoordinate1.Y], Divisions[hexCoordinate2.X, hexCoordinate2.Y]) =
+                (Divisions[hexCoordinate2.X, hexCoordinate2.Y],
+                    Divisions[hexCoordinate1.X, hexCoordinate1.Y]);
         }
 
         /// <summary>
@@ -224,8 +258,8 @@ namespace Script.Grid
                 return;
             }
 
-            GridDatas[coordinates.X, coordinates.Y] = selectedGridData;
-            hexesOwnerships[coordinates.X, coordinates.Y] = Ownership.Friend;
+
+            Divisions[coordinates.X, coordinates.Y] = new DivisionObject(Ownership.Friend, selectedGridData);
             ResetHex();
             //资源扣除
             Economic.InfInventory -= selectedGridData.infantryEquipment;
@@ -241,14 +275,102 @@ namespace Script.Grid
         /// <param name="coordinates"></param>
         private void Withdraw(HexCoordinates coordinates)
         {
-            Economic.InfInventory += GridDatas[coordinates.X, coordinates.Y].infantryEquipment;
-            Economic.ArtInventory += GridDatas[coordinates.X, coordinates.Y].artilleryEquipment;
-            Economic.ArmInventory += GridDatas[coordinates.X, coordinates.Y].armorEquipment;
-            Economic.ManpowerInventory += GridDatas[coordinates.X, coordinates.Y].Manpower;
+            Economic.InfInventory += Divisions[coordinates.X, coordinates.Y].GridData.infantryEquipment;
+            Economic.ArtInventory += Divisions[coordinates.X, coordinates.Y].GridData.artilleryEquipment;
+            Economic.ArmInventory += Divisions[coordinates.X, coordinates.Y].GridData.armorEquipment;
+            Economic.ManpowerInventory += Divisions[coordinates.X, coordinates.Y].GridData.Manpower;
             Economic.RefreshInventory();
-            GridDatas[coordinates.X, coordinates.Y] = null;
-            hexesOwnerships[coordinates.X, coordinates.Y] = Ownership.Null;
+
+            Divisions[coordinates.X, coordinates.Y] = new DivisionObject(Ownership.Null);
             ResetHex();
+        }
+
+        private void AttackAbleAimHex()
+        {
+            IsEnableAimHex = true;
+            aimHexes = GetAttackAbleHexes(selectedHexCoordinates);
+            ChangeAdjacentHexesColor(aimHexes, Color.yellow);
+        }
+
+        private void AutoFight()
+        {
+            int attIC = Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y].GridData.IC,
+                attMP = Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y].GridData.Manpower;
+            int defIC = Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].GridData.IC,
+                defMP = Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].GridData.Manpower;
+            float attQ = (float)attIC / attMP;
+            float defQ = (float)defIC / defMP;
+            float attBuff = attQ / defQ;
+            float defBuff = defQ / attQ;
+            // todo 平衡保底伤害系数
+            int attIcDamage = (int)((attBuff - defBuff + attQ * 3) * attIC);
+            int attMpDamage = (int)((attBuff - defBuff + attQ * 3) * attMP);
+            int defIcDamage = (int)((attBuff - defBuff + defQ * 3) * defIC);
+            int defMpDamage = (int)((attBuff - defBuff + defQ * 3) * defMP);
+
+            float deflostIC = attIcDamage / defIC >= 1 ? 1 : attIcDamage / defIC;
+            float attlostIC = defIcDamage / attIC >= 1 ? 1 : defIcDamage / attIC;
+            int captureInf = (int)(deflostIC * Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].GridData
+                .infantryEquipment + (int)attlostIC * Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y]
+                .GridData.infantryEquipment);
+            int captureArt = (int)(deflostIC * Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].GridData
+                .artilleryEquipment + (int)attlostIC * Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y]
+                .GridData.artilleryEquipment);
+            int captureArm = (int)(deflostIC * Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].GridData
+                .armorEquipment + (int)attlostIC * Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y]
+                .GridData.armorEquipment);
+
+            if (attIcDamage >= defIC || attMpDamage >= defMP) // 击败敌军
+            {
+                Debug.Log("大败敌军");
+                Divisions[aimHexCoordinates.X, aimHexCoordinates.Y] =
+                    Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y];
+                Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] = new DivisionObject(Ownership.Null);
+            }
+            else if (attIcDamage * 2 >= defIC || attMpDamage * 2 >= defMP) // 击退敌军
+            {
+                Debug.Log("击退敌军");
+
+                List<HexCoordinates> retractableHexs = new List<HexCoordinates>();
+                retractableHexs = GetMovAbleHexes(aimHexCoordinates,
+                    Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].hexesOwnership);
+                if (retractableHexs is not null)
+                {
+                    foreach (var coor in retractableHexs)
+                    {
+                        Swap(aimHexCoordinates, coor);
+                        if (Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].hexesOwnership == Ownership.Null)
+                        {
+                            Divisions[aimHexCoordinates.X, aimHexCoordinates.Y] =
+                                Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y];
+                            Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] =
+                                new DivisionObject(Ownership.Null);
+                        }
+
+                        break;
+                    }
+                }
+                else
+                {
+                    Debug.Log("无路可走");
+                    Divisions[aimHexCoordinates.X, aimHexCoordinates.Y] =
+                        Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y];
+                    Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] = new DivisionObject(Ownership.Null);
+                }
+            }
+            else if (defIcDamage >= attIC || defMpDamage >= attMP) //被击败
+            {
+                Debug.Log("我军败了");
+
+                Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] = new DivisionObject(Ownership.Null);
+            }
+
+            // 更新数据
+            IsEnableAimHex = false;
+            selectedHexCoordinates = new HexCoordinates();
+            aimHexes.Clear();
+            ResetHex();
+            state = State.Default;
         }
 
         /// <summary>
@@ -257,19 +379,27 @@ namespace Script.Grid
         /// <param name="coordinates">单元格</param>
         private void SelectHex(HexCoordinates coordinates)
         {
-            switch (hexesOwnerships[coordinates.X, coordinates.Y])
+            switch (Divisions[coordinates.X, coordinates.Y].hexesOwnership)
             {
                 case Ownership.Friend:
 
                     GameObject buttonPanel = Instantiate(Resources.Load<GameObject>("ButtonPanel"),
                         Functions.Functions.GetMouseWorldPosition() - new Vector3(-pfwidth, 0, 5), Quaternion.identity);
                     selectedHexCoordinates = coordinates;
-                    buttonPanel.GetComponent<ButtonPanel>().Initialize(GridDatas[coordinates.X, coordinates.Y].name,
+                    buttonPanel.GetComponent<ButtonPanel>().Initialize(
+                        Divisions[coordinates.X, coordinates.Y].GridData.name,
                         new List<(string name, Action action)>()
                         {
                             ("移动", () =>
                             {
-                                EnableAimHex();
+                                state = State.Move;
+                                MoveAbleAimHex();
+                                Destroy(buttonPanel);
+                            }),
+                            ("进攻", () =>
+                            {
+                                state = State.Attack;
+                                AttackAbleAimHex();
                                 Destroy(buttonPanel);
                             }),
                             ("撤编", () =>
@@ -316,12 +446,73 @@ namespace Script.Grid
             return adjacentHexes;
         }
 
+
         /// <summary>
         /// 获取可移动的单元格
         /// </summary>
         /// <param name="coords">中心单元格</param>
+        /// <param name="ownership">中心单元格所有者</param>
+        /// <returns>可移动的单元格列表</returns>
+        public List<HexCoordinates> GetMovAbleHexes(HexCoordinates coords, Ownership ownership)
+        {
+            List<HexCoordinates> adjacentHexes = new List<HexCoordinates>();
+            if (Divisions[coords.X, coords.Y].movepoint == 0)
+            {
+                Functions.Functions.CreateTip("没有行动点", GetWorldPostion(coords.X, coords.Y), 2f);
+                return null;
+            }
+
+            int xOffset = coords.Y % 2 == 0 ? -1 : 1;
+
+            // 定义六个可能的相邻六边形方向
+            (int x, int y)[] directions =
+            {
+                (-1, 0), // 左
+                (1, 0), // 右
+                (0, -1), // 下
+                (0, 1), // 上
+                (xOffset, 1), // 根据Y坐标的奇偶性决定是上右或上左
+                (xOffset, -1) // 根据Y坐标的奇偶性决定是下右或下左
+            };
+
+            // 计算并添加符合条件的相邻六边形坐标
+            foreach (var (dx, dy) in directions)
+            {
+                HexCoordinates newCoords = new HexCoordinates(coords.X + dx, coords.Y + dy);
+                // 检查边界和所有权
+                if (IsWithinBounds(newCoords, Divisions.GetLength(0), Divisions.GetLength(1)))
+                {
+                    switch (Divisions[newCoords.X, newCoords.Y].hexesOwnership)
+                    {
+                        case Ownership.Enemy:
+                            if (ownership==Ownership.Enemy)
+                            {
+                                adjacentHexes.Add(newCoords);
+                            }
+                            break;
+                        case Ownership.Friend:
+                            if (ownership==Ownership.Friend)
+                            {
+                                adjacentHexes.Add(newCoords);
+                            }
+                            break;
+                        case Ownership.Null:
+                            adjacentHexes.Insert(0, newCoords);
+                            break;
+                    }
+                }
+            }
+
+            return adjacentHexes;
+        }
+
+
+        /// <summary>
+        /// 获取可攻击的单元格
+        /// </summary>
+        /// <param name="coords">中心单元格</param>
         /// <returns></returns>
-        public List<HexCoordinates> GetMovAbleHexes(HexCoordinates coords)
+        public List<HexCoordinates> GetAttackAbleHexes(HexCoordinates coords)
         {
             List<HexCoordinates> adjacentHexes = new List<HexCoordinates>();
             int xOffset = coords.Y % 2 == 0 ? -1 : 1;
@@ -342,17 +533,16 @@ namespace Script.Grid
             {
                 HexCoordinates newCoords = new HexCoordinates(coords.X + dx, coords.Y + dy);
                 // Check bounds and ownership before adding
-                if (IsWithinBounds(newCoords, hexesOwnerships.GetLength(0), hexesOwnerships.GetLength(1)))
+                if (IsWithinBounds(newCoords, Divisions.GetLength(0), Divisions.GetLength(1)))
                 {
-                    switch (hexesOwnerships[newCoords.X, newCoords.Y])
+                    switch (Divisions[newCoords.X, newCoords.Y].hexesOwnership)
                     {
                         case Ownership.Enemy:
+                            adjacentHexes.Add(newCoords);
                             break;
                         case Ownership.Friend:
-                            adjacentHexes.Add(newCoords); 
                             break;
                         case Ownership.Null:
-                            adjacentHexes.Add(newCoords);
                             break;
                     }
                 }
@@ -385,14 +575,14 @@ namespace Script.Grid
             Image icon = hex.transform.Find("icon").GetComponent<Image>();
 
             // 设置颜色和图标可见性
-            var ownership = hexesOwnerships[x, y];
+            var ownership = Divisions[x, y].hexesOwnership;
             image.color = GetColorByOwnership(ownership);
             icon.enabled = (ownership != Ownership.Null);
 
             // 如果不是 Null 所有权，设置相应的图标
             if (ownership != Ownership.Null)
             {
-                icon.sprite = GetIconByBattalionType(GridDatas[x, y]);
+                icon.sprite = GetIconByBattalionType(Divisions[x, y].GridData);
             }
         }
 
@@ -454,8 +644,7 @@ namespace Script.Grid
             while (x < width)
             {
                 // 放置敌军
-                hexesOwnerships[x, y] = Ownership.Enemy;
-                GridDatas[x, y] = Functions.Functions.LoadByJson("填线宝宝");
+                Divisions[x, y] = new DivisionObject(Ownership.Enemy, Functions.Functions.LoadByJson("填线宝宝"));
                 int t = seed % 3;
                 if (t == 1)
                 {
@@ -477,6 +666,46 @@ namespace Script.Grid
 
                 seed /= 7;
             }
+        }
+
+        public void NextTurn()
+        {
+            for (var x = 0; x < hexes.GetLength(0); x++)
+            {
+                for (var y = 0; y < hexes.GetLength(1); y++)
+                {
+                    SetHexColorAndIcon(x, y);
+                    if (Divisions[x, y].hexesOwnership == Ownership.Null)
+                    {
+                        Divisions[x, y].movepoint = -1;
+                    }
+                    else
+                    {
+                        Divisions[x, y].movepoint = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    public struct DivisionObject
+    {
+        public Ownership hexesOwnership;
+        public GridData GridData;
+        public int movepoint;
+
+        public DivisionObject(Ownership hexesOwnership, GridData gridData) : this()
+        {
+            this.hexesOwnership = hexesOwnership;
+            GridData = gridData;
+            movepoint = 1;
+        }
+
+        public DivisionObject(Ownership ownership = Ownership.Null)
+        {
+            hexesOwnership = ownership;
+            GridData = null;
+            movepoint = 0;
         }
     }
 
