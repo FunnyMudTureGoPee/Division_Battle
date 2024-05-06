@@ -500,12 +500,13 @@ namespace Script.Grid
         }
 
         /// <summary>
-        /// 保存
+        /// 保存并关闭
         /// </summary>
         /// <param name="path">SaveFiles下的子路径</param>
         public void SaveDivision(string path)
         {
-            string dividsonName = aimPanel.transform.Find("Information").GetComponent<Information>().DivisionName;
+            string divisionName =
+                aimPanel.transform.Find("Information").GetComponent<Information>().DivisionName ?? "军团";
             int level = aimPanel.transform.Find("Information").GetComponent<Information>().ListLength switch
             {
                 < 3 => 1,
@@ -513,8 +514,10 @@ namespace Script.Grid
                 _ => 3
             };
 
-            GridData gridData = new GridData(dividsonName, level, Grid.Battalions);
-            Functions.Functions.SaveByJson(path + dividsonName, gridData);
+            GridData gridData = new GridData(divisionName, level, Grid.Battalions);
+            Functions.Functions.SaveByJson(path + divisionName, gridData);
+            isEditor = false;
+            aimPanel.SetActive(false);
         }
 
 
@@ -522,7 +525,8 @@ namespace Script.Grid
         {
             InitDivision();
 
-            gameObject.transform.parent.Find("Information").Find("Name").GetComponent<InputField>().text =
+            var parent = gameObject.transform.parent;
+            parent.Find("Information").Find("Name").GetComponent<InputField>().text =
                 gridData.name;
             foreach (var varBattalionData in gridData.battalionDatas)
             {
@@ -537,11 +541,11 @@ namespace Script.Grid
         public void RefreshCost()
         {
             Transform cost = transform.Find("Cost");
-            cost.Find("InfE").Find("value").GetComponent<Text>().text = InfantryEquipment + "";
-            cost.Find("ArtE").Find("value").GetComponent<Text>().text = ArtilleryEquipment + "";
-            cost.Find("ArmE").Find("value").GetComponent<Text>().text = ArmorEquipment + "";
-            cost.Find("Manpower").Find("value").GetComponent<Text>().text = Manpower + "";
-            cost.Find("IC").Find("value").GetComponent<Text>().text = Ic + "";
+            cost.Find("InfE").Find("value").GetComponent<Text>().text = InfantryEquipment.ToString("F1");
+            cost.Find("ArtE").Find("value").GetComponent<Text>().text = ArtilleryEquipment.ToString("F1");
+            cost.Find("ArmE").Find("value").GetComponent<Text>().text = ArmorEquipment.ToString("F1");
+            cost.Find("Manpower").Find("value").GetComponent<Text>().text = Manpower.ToString("F1");
+            cost.Find("IC").Find("value").GetComponent<Text>().text = Ic.ToString("F1");
         }
 
         public void InitDivision()

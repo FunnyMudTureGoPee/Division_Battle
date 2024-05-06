@@ -89,11 +89,25 @@ namespace Script
         public void Button2Next(GameObject gameObject)
         {
             if (friendGridPanel.transform.Find("Information").GetComponent<Information>()
-                    .ListLength == 0 ||
-                enemyGridPanel.transform.Find("Information").GetComponent<Information>()
-                    .ListLength == 0)
+                    .ListLength == 0 )
             {
+                // 我军败了
                 BattleEnd();
+                GameObject.Find("MainController").GetComponent<MainController>().SwitchDisplay();
+                GameObject.Find("FrontGrid").GetComponent<FrontGrid>().Defeat();
+                GameObject.Find("FrontGrid").GetComponent<FrontGrid>().FightEnd();
+                Destroy(gameObject);
+                return;
+            }
+
+            if (enemyGridPanel.transform.Find("Information").GetComponent<Information>()
+                .ListLength == 0)
+            {
+                // 我军胜了
+                BattleEnd();
+                GameObject.Find("MainController").GetComponent<MainController>().SwitchDisplay();
+                GameObject.Find("FrontGrid").GetComponent<FrontGrid>().Victory_S();
+                GameObject.Find("FrontGrid").GetComponent<FrontGrid>().FightEnd();
                 Destroy(gameObject);
                 return;
             }
@@ -342,6 +356,8 @@ namespace Script
             message += "步枪装备：" + inf + "\n";
             message += "火炮：" + art + "\n";
             message += "装甲：" + arm + "\n";
+            
+            
             Debug.LogError(message);
         }
 

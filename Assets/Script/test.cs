@@ -59,11 +59,7 @@ namespace Script
         public void Load()
         {
             GridData gridData = Functions.Functions.LoadByJson("填线宝宝");
-            foreach (var varBattalionData in gridData.battalionDatas)
-            {
-                GridManger2.GetComponent<DivisionManger>().CreatBattalion(varBattalionData.x, varBattalionData.y,
-                    varBattalionData.dirs, varBattalionData.types);
-            }
+            GridManger2.GetComponent<DivisionManger>().LoadDivision(gridData);
         }
     }
 }

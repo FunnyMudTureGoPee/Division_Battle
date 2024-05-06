@@ -110,7 +110,7 @@ namespace Script.Grid
                                     Move();
                                     break;
                                 case State.Attack:
-                                    AutoFight();
+                                    SelectFight(coordinates);
                                     break;
                                 default: break;
                             }
@@ -210,7 +210,7 @@ namespace Script.Grid
         {
             aimHexes = GetMovAbleHexes(selectedHexCoordinates,
                 Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y].hexesOwnership);
-            if(aimHexes is null) return;
+            if (aimHexes is null) return;
             IsEnableAimHex = true;
             ChangeAdjacentHexesColor(aimHexes, Color.blue);
         }
@@ -218,7 +218,7 @@ namespace Script.Grid
         public void Move()
         {
             Swap(aimHexCoordinates, selectedHexCoordinates);
-            
+
             IsEnableAimHex = false;
             selectedHexCoordinates = new HexCoordinates();
             aimHexes.Clear();
@@ -243,11 +243,9 @@ namespace Script.Grid
         /// <param name="coordinates"></param>
         public void Arrange(HexCoordinates coordinates)
         {
-            if (selectedGridData is null)
-            {
-                Debug.Log("空");
-                return;
-            }
+            if (selectedGridData is null) return;
+
+            if (Divisions[coordinates.X,coordinates.Y].hexesOwnership!=Ownership.Null ) return;
 
             if (Economic.InfInventory < selectedGridData.infantryEquipment ||
                 Economic.ArtInventory < selectedGridData.artilleryEquipment ||
@@ -292,6 +290,36 @@ namespace Script.Grid
             ChangeAdjacentHexesColor(aimHexes, Color.yellow);
         }
 
+        private void SelectFight(HexCoordinates coordinates)
+        {
+            GameObject buttonPanel = Instantiate(Resources.Load<GameObject>("ButtonPanel"),
+                Functions.Functions.GetMouseWorldPosition() - new Vector3(-pfwidth, 0, 5), Quaternion.identity);
+            buttonPanel.GetComponent<ButtonPanel>().Initialize(Divisions[coordinates.X, coordinates.Y].GridData.name,
+                new List<(string name, Action action)>()
+                {
+                    ("自动战斗", () =>
+                    {
+                        AutoFight();
+                        Destroy(buttonPanel);
+                    }),
+                    ("手动战斗", () =>
+                    {
+                        ManualFight();
+                        Destroy(buttonPanel);
+                    }),
+                    ("取消", () => { Destroy(buttonPanel); })
+                });
+            ;
+        }
+
+        private void ManualFight()
+        {
+            GameObject.Find("MainController").GetComponent<MainController>().Fight(
+                Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y].GridData,
+                Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].GridData);
+            
+        }
+
         private void AutoFight()
         {
             int attIC = Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y].GridData.IC,
@@ -308,8 +336,11 @@ namespace Script.Grid
             int defIcDamage = (int)((attBuff - defBuff + defQ * 3) * defIC);
             int defMpDamage = (int)((attBuff - defBuff + defQ * 3) * defMP);
 
+
             float deflostIC = attIcDamage / defIC >= 1 ? 1 : attIcDamage / defIC;
             float attlostIC = defIcDamage / attIC >= 1 ? 1 : defIcDamage / attIC;
+
+
             int captureInf = (int)(deflostIC * Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].GridData
                 .infantryEquipment + (int)attlostIC * Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y]
                 .GridData.infantryEquipment);
@@ -322,55 +353,116 @@ namespace Script.Grid
 
             if (attIcDamage >= defIC || attMpDamage >= defMP) // 击败敌军
             {
-                Debug.Log("大败敌军");
-                Divisions[aimHexCoordinates.X, aimHexCoordinates.Y] =
-                    Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y];
-                Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] = new DivisionObject(Ownership.Null);
+                Victory_S();
             }
             else if (attIcDamage * 2 >= defIC || attMpDamage * 2 >= defMP) // 击退敌军
             {
-                Debug.Log("击退敌军");
-
-                List<HexCoordinates> retractableHexs = new List<HexCoordinates>();
-                retractableHexs = GetMovAbleHexes(aimHexCoordinates,
-                    Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].hexesOwnership);
-                if (retractableHexs is not null)
-                {
-                    foreach (var coor in retractableHexs)
-                    {
-                        Swap(aimHexCoordinates, coor);
-                        if (Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].hexesOwnership == Ownership.Null)
-                        {
-                            Divisions[aimHexCoordinates.X, aimHexCoordinates.Y] =
-                                Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y];
-                            Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] =
-                                new DivisionObject(Ownership.Null);
-                        }
-
-                        break;
-                    }
-                }
-                else
-                {
-                    Debug.Log("无路可走");
-                    Divisions[aimHexCoordinates.X, aimHexCoordinates.Y] =
-                        Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y];
-                    Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] = new DivisionObject(Ownership.Null);
-                }
+                Victory_A();
             }
             else if (defIcDamage >= attIC || defMpDamage >= attMP) //被击败
             {
-                Debug.Log("我军败了");
-
-                Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] = new DivisionObject(Ownership.Null);
+                Defeat();
             }
 
+            FightEnd();
+        }
+
+        public void FightEnd()
+        {
+            Debug.Log("打完了");
             // 更新数据
             IsEnableAimHex = false;
             selectedHexCoordinates = new HexCoordinates();
             aimHexes.Clear();
             ResetHex();
             state = State.Default;
+        }
+
+        public void Defeat()
+        {
+            Debug.Log("我军败了");
+            Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] = new DivisionObject(Ownership.Null);
+        }
+
+
+        public void Victory_A()
+        {
+            Debug.Log("击退敌军");
+
+            List<HexCoordinates> retractableHexs = new List<HexCoordinates>();
+            retractableHexs = GetMovAbleHexes(aimHexCoordinates,
+                Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].hexesOwnership);
+            if (retractableHexs is not null)
+            {
+                foreach (var coor in retractableHexs)
+                {
+                    Swap(aimHexCoordinates, coor);
+                    if (Divisions[aimHexCoordinates.X, aimHexCoordinates.Y].hexesOwnership == Ownership.Null)
+                    {
+                        Divisions[aimHexCoordinates.X, aimHexCoordinates.Y] =
+                            Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y];
+                        Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] =
+                            new DivisionObject(Ownership.Null);
+                    }
+
+                    break;
+                }
+            }
+            else
+            {
+                Debug.Log("无路可走");
+                Divisions[aimHexCoordinates.X, aimHexCoordinates.Y] =
+                    Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y];
+                Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] = new DivisionObject(Ownership.Null);
+            }
+        }
+
+        public void Victory_S()
+        {
+            Debug.Log("大败敌军");
+            Divisions[aimHexCoordinates.X, aimHexCoordinates.Y] =
+                Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y];
+            Divisions[selectedHexCoordinates.X, selectedHexCoordinates.Y] = new DivisionObject(Ownership.Null);
+        }
+        
+        private void Victory_A(HexCoordinates attHexCoordinates,HexCoordinates defHexCoordinates)
+        {
+            Debug.Log("击退敌军");
+
+            List<HexCoordinates> retractableHexs = new List<HexCoordinates>();
+            retractableHexs = GetMovAbleHexes(defHexCoordinates,
+                Divisions[defHexCoordinates.X, defHexCoordinates.Y].hexesOwnership);
+            if (retractableHexs is not null)
+            {
+                foreach (var coor in retractableHexs)
+                {
+                    Swap(defHexCoordinates, coor);
+                    if (Divisions[defHexCoordinates.X, defHexCoordinates.Y].hexesOwnership == Ownership.Null)
+                    {
+                        Divisions[defHexCoordinates.X, defHexCoordinates.Y] =
+                            Divisions[attHexCoordinates.X, attHexCoordinates.Y];
+                        Divisions[attHexCoordinates.X, attHexCoordinates.Y] =
+                            new DivisionObject(Ownership.Null);
+                    }
+
+                    break;
+                }
+            }
+            else
+            {
+                Debug.Log("无路可走");
+                Divisions[defHexCoordinates.X, defHexCoordinates.Y] =
+                    Divisions[attHexCoordinates.X, attHexCoordinates.Y];
+                Divisions[attHexCoordinates.X, attHexCoordinates.Y] = new DivisionObject(Ownership.Null);
+            }
+        }
+
+        private void Victory_S(HexCoordinates attHexCoordinates,HexCoordinates defHexCoordinates)
+        {
+            Debug.Log("大败敌军");
+            Divisions[attHexCoordinates.X, attHexCoordinates.Y] =
+                Divisions[defHexCoordinates.X, defHexCoordinates.Y];
+            Divisions[defHexCoordinates.X, defHexCoordinates.Y] = new DivisionObject(Ownership.Null);
         }
 
         /// <summary>
@@ -485,16 +577,18 @@ namespace Script.Grid
                     switch (Divisions[newCoords.X, newCoords.Y].hexesOwnership)
                     {
                         case Ownership.Enemy:
-                            if (ownership==Ownership.Enemy)
+                            if (ownership == Ownership.Enemy)
                             {
                                 adjacentHexes.Add(newCoords);
                             }
+
                             break;
                         case Ownership.Friend:
-                            if (ownership==Ownership.Friend)
+                            if (ownership == Ownership.Friend)
                             {
                                 adjacentHexes.Add(newCoords);
                             }
+
                             break;
                         case Ownership.Null:
                             adjacentHexes.Insert(0, newCoords);

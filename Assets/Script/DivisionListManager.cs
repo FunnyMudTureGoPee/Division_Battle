@@ -49,6 +49,7 @@ namespace Script
 
         public void LoadDivision(GridData gridData)
         {
+            friendPanel.SetActive(true);
             friendPanel.transform.Find("DivisionManger").GetComponent<DivisionManger>().LoadDivision(gridData);
         }
 
