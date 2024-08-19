@@ -1,0 +1,1 @@
+{"name":"军团","level":2,"Type":2,"IC":2000,"infantryEquipment":0,"artilleryEquipment":0,"armorEquipment":200,"Manpower":2000,"battalionDatas":[{"x":5,"y":2,"dirs":3,"types":2,"id":123},{"x":3,"y":5,"dirs":0,"types":2,"id":123},{"x":8,"y":4,"dirs":2,"types":2,"id":123},{"x":6,"y":7,"dirs":1,"types":2,"id":123}],"width":12,"high":18}

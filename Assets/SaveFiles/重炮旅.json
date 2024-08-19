@@ -1,0 +1,1 @@
+{"name":"重炮旅","level":2,"Type":1,"IC":590,"infantryEquipment":100,"artilleryEquipment":108,"armorEquipment":0,"Manpower":2500,"battalionDatas":[{"x":4,"y":7,"dirs":2,"types":0,"id":123},{"x":6,"y":2,"dirs":3,"types":1,"id":123},{"x":6,"y":7,"dirs":3,"types":1,"id":123},{"x":5,"y":5,"dirs":0,"types":1,"id":123}],"width":12,"high":18}

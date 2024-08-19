@@ -55,7 +55,7 @@ namespace Script
 
         public void DeleteDivision(string name, GameObject itself)
         {
-            string filePath = folderPath + "/" + name;
+            string filePath = folderPath + "/" + name+".json";
             // 检查文件是否存在
             if (File.Exists(filePath))
             {
@@ -68,7 +68,7 @@ namespace Script
             }
 
             Destroy(itself);
-            CreatItem();
+            Refresh();
         }
 
         void ExploreDirectory(string path)
@@ -96,6 +96,7 @@ namespace Script
 
         public void CreateNewDivision()
         {
+            friendPanel.SetActive(true);
             friendPanel.transform.Find("DivisionManger").GetComponent<DivisionManger>().InitDivision();
         }
     }

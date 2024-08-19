@@ -10305,7 +10305,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Economic: {fileID: 1489749941}
   hexPrefab: {fileID: 6828490107859340519, guid: ec044792e206fff4eb6ad0b7bcf01475, type: 3}
-  width: 10
+  width: 15
   height: 10
 --- !u!223 &1608692032
 Canvas:
@@ -13515,7 +13515,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1712380805}
         m_TargetAssemblyTypeName: Script.DivisionListManger, Assembly-CSharp
-        m_MethodName: CreatNewDivision
+        m_MethodName: CreateNewDivision
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

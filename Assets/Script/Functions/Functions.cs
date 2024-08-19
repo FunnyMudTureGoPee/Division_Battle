@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using LitJson;
@@ -8,6 +9,7 @@ using Script.Grid;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace Script.Functions
 {
@@ -160,24 +162,48 @@ namespace Script.Functions
             gameObject.GetComponent<MonoStub>().StartCoroutine(Timer(gameObject, time));
         }
 
-        public static Button CreateButtonTip(string text, GameObject gameObject, Transform parent,
-            Vector3 localPosition)
+        /// <summary>
+        /// 创建一次性提示按钮
+        /// </summary>
+        /// <param name="text">文本</param>
+        /// <param name="parent">父对象</param>
+        /// <param name="localPosition">本地坐标</param>
+        /// <param name="actions">行为列表（最后摧毁自身）</param>
+        /// <returns>提示按钮对象</returns>
+        public static GameObject CreateButtonTip(string text, Transform parent,
+            Vector3 localPosition, List<Action> actions)
         {
-            gameObject.name = "Button Tip";
-            gameObject.transform.parent = parent;
-            gameObject.transform.position = localPosition;
+            GameObject gameObject = new GameObject
+            {
+                name = "Button Tip",
+                transform =
+                {
+                    parent = parent,
+                    position = localPosition
+                }
+            };
             gameObject.AddComponent<Image>();
+            gameObject.AddComponent<Button>();
+            foreach (var action in actions)
+            {
+                gameObject.GetComponent<Button>().onClick.AddListener(()=>action());
+            }
+            gameObject.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                Object.Destroy(gameObject);
+            });
             GameObject textobject = new GameObject("Text", typeof(Text))
             {
                 transform = { parent = gameObject.transform }
             };
             textobject.GetComponent<Text>().text = text;
-            textobject.GetComponent<Text>().font = Resources.Load<Font>("中文像素字体(IPIX)");
-            textobject.GetComponent<Text>().alignment = TextAnchor.UpperCenter;
+            textobject.GetComponent<Text>().font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            textobject.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
             textobject.GetComponent<Text>().color = Color.black;
-            textobject.GetComponent<Text>().fontSize = 40;
-            gameObject.AddComponent<Button>();
-            return gameObject.GetComponent<Button>();
+            textobject.GetComponent<Text>().fontSize = 80;
+            textobject.GetComponent<Text>().resizeTextForBestFit = true;
+
+            return gameObject;
         }
 
         public static int CalculateIC(BattalionData.BattalionTypes type)
